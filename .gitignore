@@ -31,4 +31,5 @@ go.work.sum
 # Editor/IDE
 # .idea/
 .vscode/
-parser.go
+parser1.go
+testdata

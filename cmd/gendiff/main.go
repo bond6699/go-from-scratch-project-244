@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+
 	// Parser "code/internal/parser"
 	"code/internal/cli"
 )
@@ -33,6 +34,7 @@ func main() {
 
 	err := app.Run(context.Background(), os.Args)
 	if err != nil {
+		fmt.Println()
 		_, _ = fmt.Fprintln(os.Stderr, err)
 
 		os.Exit(1)
