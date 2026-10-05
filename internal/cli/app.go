@@ -42,7 +42,12 @@ func actionLogic(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	fmt.Println(model1, model2)
+	data, _ := parser.ToJSON(model1)
+	fmt.Println(string(data))
+	fmt.Println()
+
+	data, _ = parser.ToJSON(model2)
+	fmt.Println(string(data))
 
 	return nil
 }

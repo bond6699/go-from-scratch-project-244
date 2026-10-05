@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -15,7 +16,7 @@ type Parser interface {
 
 func isValidPath(path string) bool {
 	path = strings.TrimSpace(path)
-	if !strings.HasSuffix(path, ".json") && !strings.HasSuffix(path, ".yml") {
+	if !strings.HasSuffix(path, ".json") && !strings.HasSuffix(path, ".yml") && !strings.HasSuffix(path, ".yaml") {
 		return false
 	}
 
@@ -25,7 +26,7 @@ func isValidPath(path string) bool {
 
 func getParser(path string) Parser {
 	if strings.HasSuffix(path, "json") {
-		return JsonParser{}
+		return JSONParser{}
 	}
 	return YamlParser{}
 }
@@ -45,6 +46,15 @@ func Parse(filepath string) (*Model, error) {
 	data, err := parser.Parse(bytes)
 	if err != nil {
 		return empty, err
+	}
+
+	return data, nil
+}
+
+func ToJSON(model *Model) ([]byte, error) {
+	data, err := json.MarshalIndent(model, "", "  ")
+	if err != nil {
+		return []byte{}, err
 	}
 
 	return data, nil

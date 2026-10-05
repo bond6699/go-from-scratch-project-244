@@ -1,10 +1,12 @@
 package parser
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
-type JsonParser struct{}
+type JSONParser struct{}
 
-func (jp JsonParser) Parse(bytes []byte) (*Model, error) {
+func (jp JSONParser) Parse(bytes []byte) (*Model, error) {
 	var jsonData map[string]any
 
 	err := json.Unmarshal(bytes, &jsonData)
@@ -12,11 +14,7 @@ func (jp JsonParser) Parse(bytes []byte) (*Model, error) {
 		return &Model{}, err
 	}
 
-	data := CreateModel("json", nil)
+	data := New("json", jsonData)
 
-	for k, v := range jsonData {
-		data.AddPair(k, v)
-	}
-
-	return &data, nil
+	return data, nil
 }
