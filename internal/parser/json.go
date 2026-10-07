@@ -14,7 +14,7 @@ func (jp JSONParser) Parse(bytes []byte) (*Model, error) {
 		return &Model{}, err
 	}
 
-	data := New("json", jsonData)
+	data := New("root", jsonData)
 
 	return data, nil
 }

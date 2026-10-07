@@ -52,7 +52,7 @@ func Parse(filepath string) (*Model, error) {
 }
 
 func ToJSON(model *Model) ([]byte, error) {
-	data, err := json.MarshalIndent(model, "", "  ")
+	data, err := json.MarshalIndent(model, "", "   ")
 	if err != nil {
 		return []byte{}, err
 	}

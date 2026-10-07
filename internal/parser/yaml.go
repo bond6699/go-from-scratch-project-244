@@ -14,7 +14,7 @@ func (yp YamlParser) Parse(bytes []byte) (*Model, error) {
 		return &Model{}, err
 	}
 
-	data := New("yaml", yamlData)
+	data := New("root", yamlData)
 
 	return data, nil
 }
