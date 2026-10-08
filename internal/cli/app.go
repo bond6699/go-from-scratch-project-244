@@ -30,24 +30,19 @@ func actionLogic(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	model1, err := parser.Parse(fp1)
+	data1, err := parser.Parse(fp1)
 	if err != nil {
 		_ = cli.ShowRootCommandHelp(cmd)
 		return err
 	}
 
-	model2, err := parser.Parse(fp2)
+	data2, err := parser.Parse(fp2)
 	if err != nil {
 		_ = cli.ShowRootCommandHelp(cmd)
 		return err
 	}
 
-	data, _ := parser.ToJSON(model1)
-	fmt.Println(string(data))
-	fmt.Println()
-
-	data, _ = parser.ToJSON(model2)
-	fmt.Println(string(data))
+	fmt.Println(data1, data2)
 
 	return nil
 }
