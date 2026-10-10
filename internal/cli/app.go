@@ -2,9 +2,11 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
+	"code/internal/analyzer"
 	"code/internal/parser"
 
 	"github.com/urfave/cli/v3"
@@ -35,14 +37,20 @@ func actionLogic(ctx context.Context, cmd *cli.Command) error {
 		_ = cli.ShowRootCommandHelp(cmd)
 		return err
 	}
+	data1 = parser.Normalize(data1)
 
 	data2, err := parser.Parse(fp2)
 	if err != nil {
 		_ = cli.ShowRootCommandHelp(cmd)
 		return err
 	}
+	data2 = parser.Normalize(data2)
 
-	fmt.Println(data1, data2)
+	diff := analyzer.Analyze(data1, data2)
+
+	resultBytes, _ := json.MarshalIndent(diff, "", "   ")
+
+	fmt.Println(string(resultBytes))
 
 	return nil
 }
