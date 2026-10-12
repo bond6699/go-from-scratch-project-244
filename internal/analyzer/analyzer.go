@@ -3,7 +3,6 @@ package analyzer
 import (
 	"reflect"
 	"slices"
-	"strconv"
 )
 
 type DiffStatus string
@@ -23,7 +22,16 @@ type DiffNode struct {
 	Children map[string]*DiffNode `json:"child,omitempty"`
 }
 
-func getKeys(data1 map[string]any, data2 map[string]any) []string {
+func newDiffNode(key string, status DiffStatus, oldValue any, newValue any) *DiffNode {
+	return &DiffNode{
+		Key:      key,
+		Status:   status,
+		OldValue: oldValue,
+		NewValue: newValue,
+	}
+}
+
+func getSortedKeys(data1 map[string]any, data2 map[string]any) []string {
 	keysMap := make(map[string]struct{})
 
 	for key := range data1 {
@@ -39,6 +47,7 @@ func getKeys(data1 map[string]any, data2 map[string]any) []string {
 		keys = append(keys, key)
 	}
 
+	slices.Sort(keys)
 	return keys
 }
 
@@ -48,8 +57,8 @@ func Analyze(data1, data2 map[string]any) *DiffNode {
 		Children: map[string]*DiffNode{},
 	}
 
-	keys := getKeys(data1, data2)
-	slices.Sort(keys)
+	keys := getSortedKeys(data1, data2)
+
 	for _, key := range keys {
 		oldValue, oldExist := data1[key]
 		newValue, newExist := data2[key]
@@ -62,83 +71,35 @@ func Analyze(data1, data2 map[string]any) *DiffNode {
 
 func AnalyzeValue(key string, oldValue any, oldExist bool, newValue any, newExist bool) *DiffNode {
 	if !oldExist {
-		return &DiffNode{
-			Key:      key,
-			NewValue: newValue,
-			Status:   Added,
-		}
+		return newDiffNode(key, Added, nil, newValue)
 	}
 
 	if !newExist {
-		return &DiffNode{
-			Key:      key,
-			OldValue: oldValue,
-			Status:   Deleted,
+		return newDiffNode(key, Deleted, oldValue, nil)
+	}
+
+	oldMap, oldIsMap := oldValue.(map[string]any)
+	newMap, newIsMap := newValue.(map[string]any)
+
+	if oldIsMap && newIsMap {
+		node := Analyze(oldMap, newMap)
+		node.Key = key
+		return node
+	}
+
+	oldArray, oldIsArray := oldValue.([]any)
+	newArray, newIsArray := newValue.([]any)
+
+	if oldIsArray && newIsArray {
+		if reflect.DeepEqual(oldArray, newArray) {
+			return newDiffNode(key, Unchanged, oldArray, newArray)
 		}
+		return newDiffNode(key, Changed, oldArray, newArray)
 	}
 
-	if reflect.TypeOf(oldValue) == reflect.TypeOf(newValue) {
-		switch oldValue.(type) {
-		case map[string]any:
-			oldV := oldValue.(map[string]any)
-			newV := newValue.(map[string]any)
-			node := Analyze(oldV, newV)
-			node.Key = key
-			return node
-		case []any:
-			oldV := oldValue.([]any)
-			newV := newValue.([]any)
-			maxLen := max(len(oldV), len(newV))
-			node := &DiffNode{
-				Status:   Unchanged,
-				Key:      key,
-				Children: make(map[string]*DiffNode, maxLen),
-			}
-
-			for i := 0; i < maxLen; i++ {
-				existOldItem := i < len(oldV)
-				existNewItem := i < len(newV)
-
-				var oldItemValue, newItemValue any
-
-				if existOldItem {
-					oldItemValue = oldV[i]
-				}
-
-				if existNewItem {
-					newItemValue = newV[i]
-				}
-
-				index := strconv.Itoa(i)
-
-				node.Children[index] = AnalyzeValue(
-					index,
-					oldItemValue, existOldItem,
-					newItemValue, existNewItem,
-				)
-			}
-			return node
-		default:
-			if oldValue == newValue {
-				return &DiffNode{
-					Key:      key,
-					Status:   Unchanged,
-					OldValue: oldValue,
-				}
-			} else {
-				return &DiffNode{
-					Key:      key,
-					Status:   Changed,
-					OldValue: oldValue,
-					NewValue: newValue,
-				}
-			}
-		}
+	if oldValue == newValue {
+		return newDiffNode(key, Unchanged, oldValue, nil)
 	}
-	return &DiffNode{
-		Key:      key,
-		Status:   Changed,
-		OldValue: oldValue,
-		NewValue: newValue,
-	}
+
+	return newDiffNode(key, Changed, oldValue, newValue)
 }

@@ -26,6 +26,9 @@ func NormalizeValue(value any) any {
 	case uint64:
 		return float64(v)
 
+	case nil:
+		return "null"
+
 	default:
 		return value
 	}

@@ -2,31 +2,43 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 
 	"code/internal/analyzer"
+	"code/internal/formatter"
 	"code/internal/parser"
 
 	"github.com/urfave/cli/v3"
 )
 
-var errPathArgsCount = errors.New("invalid argument count")
+var formatsMap map[string]struct{} = map[string]struct{}{
+	"stylish": {},
+	"plain":   {},
+	"json":    {},
+}
 
-func getPaths(cmd *cli.Command) (string, string, error) {
+func getArgs(cmd *cli.Command) (string, string, string, error) {
 	filepath1 := cmd.StringArg("filepath1")
 	filepath2 := cmd.StringArg("filepath2")
+	format := cmd.String("format")
 
 	if filepath1 == "" || filepath2 == "" {
-		return "", "", errPathArgsCount
+		return "", "", "", fmt.Errorf("invalid argument count")
 	}
 
-	return filepath1, filepath2, nil
+	if format == "" {
+		format = "stylish"
+	}
+
+	if _, ok := formatsMap[format]; !ok {
+		return filepath1, filepath2, format, fmt.Errorf("invalid format")
+	}
+
+	return filepath1, filepath2, format, nil
 }
 
 func actionLogic(ctx context.Context, cmd *cli.Command) error {
-	fp1, fp2, err := getPaths(cmd)
+	fp1, fp2, format, err := getArgs(cmd)
 	if err != nil {
 		_ = cli.ShowRootCommandHelp(cmd)
 		return err
@@ -48,9 +60,13 @@ func actionLogic(ctx context.Context, cmd *cli.Command) error {
 
 	diff := analyzer.Analyze(data1, data2)
 
-	resultBytes, _ := json.MarshalIndent(diff, "", "   ")
+	result, err := formatter.Format(format, diff)
+	if err != nil {
+		fmt.Print(err)
+		return err
+	}
 
-	fmt.Println(string(resultBytes))
+	fmt.Println(result)
 
 	return nil
 }

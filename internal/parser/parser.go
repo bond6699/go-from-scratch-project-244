@@ -49,7 +49,6 @@ func isValidPath(path string) bool {
 	}
 
 	_, err := os.Stat(path)
-	fmt.Print(err)
 	return err == nil
 }
 
