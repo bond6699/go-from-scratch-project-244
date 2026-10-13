@@ -42,17 +42,7 @@ func (yp YamlParser) Parse(bytes []byte) (map[string]any, error) {
 	return yamlData, nil
 }
 
-func isValidPath(path string) bool {
-	path = strings.TrimSpace(path)
-	if !strings.HasSuffix(path, ".json") && !strings.HasSuffix(path, ".yml") && !strings.HasSuffix(path, ".yaml") {
-		return false
-	}
-
-	_, err := os.Stat(path)
-	return err == nil
-}
-
-func getParser(path string) Parser {
+func NewParser(path string) Parser {
 	if strings.HasSuffix(path, "json") {
 		return JSONParser{}
 	}
@@ -71,11 +61,21 @@ func Parse(filepath string) (map[string]any, error) {
 		return result, err
 	}
 
-	parser := getParser(filepath)
+	parser := NewParser(filepath)
 	result, err = parser.Parse(bytes)
 	if err != nil {
 		return result, err
 	}
 
 	return result, nil
+}
+
+func isValidPath(path string) bool {
+	path = strings.TrimSpace(path)
+	if !strings.HasSuffix(path, ".json") && !strings.HasSuffix(path, ".yml") && !strings.HasSuffix(path, ".yaml") {
+		return false
+	}
+
+	_, err := os.Stat(path)
+	return err == nil
 }

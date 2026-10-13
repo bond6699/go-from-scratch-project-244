@@ -16,12 +16,6 @@ func NewFormatterStylish() FormatterStylish {
 	return FormatterStylish{}
 }
 
-func (fs FormatterStylish) sortedChildKeys(node *analyzer.DiffNode) []string {
-	keys := slices.Collect(maps.Keys(node.Children))
-	slices.Sort(keys)
-	return keys
-}
-
 func (fs FormatterStylish) Format(node *analyzer.DiffNode) (string, error) {
 	builder := &strings.Builder{}
 
@@ -35,15 +29,6 @@ func (fs FormatterStylish) Format(node *analyzer.DiffNode) (string, error) {
 }
 
 func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node *analyzer.DiffNode) {
-	if node.Children != nil {
-		fmt.Fprintf(builder, "\n%s%s: {", getIndent(indent), node.Key)
-		for _, key := range fs.sortedChildKeys(node) {
-			fs.formatNode(builder, indent+1, node.Children[key])
-		}
-		fmt.Fprintf(builder, "\n%s}", getIndent(indent))
-		return
-	}
-
 	switch node.Status {
 	case analyzer.Added:
 		fmt.Fprintf(builder, "\n%s + %s: %v", getMarkedIndent(indent), node.Key, fs.formatValue(node.NewValue, indent+1))
@@ -53,18 +38,17 @@ func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node
 		fmt.Fprintf(builder, "\n%s - %s: %v", getMarkedIndent(indent), node.Key, fs.formatValue(node.OldValue, indent+1))
 		fmt.Fprintf(builder, "\n%s + %s: %v", getMarkedIndent(indent), node.Key, fs.formatValue(node.NewValue, indent+1))
 	case analyzer.Unchanged:
+		if node.Children != nil {
+			fmt.Fprintf(builder, "\n%s%s: {", getIndent(indent), node.Key)
+			for _, key := range fs.sortedChildKeys(node) {
+				fs.formatNode(builder, indent+1, node.Children[key])
+			}
+			fmt.Fprintf(builder, "\n%s}", getIndent(indent))
+			return
+		}
+
 		fmt.Fprintf(builder, "\n%s%s: %v", getIndent(indent), node.Key, fs.formatValue(node.OldValue, indent+1))
 	}
-}
-
-func getIndent(indent int) string {
-	return strings.Repeat(" ", 4*indent)
-}
-
-func getMarkedIndent(indent int) string {
-	indentStr := strings.Repeat(" ", 4*(indent-1))
-	indentStr += " "
-	return indentStr
 }
 
 func (fs FormatterStylish) formatValue(value any, indent int) any {
@@ -92,4 +76,20 @@ func (fs FormatterStylish) formatNestedValue(value any, indent int) string {
 	result = strings.Replace(result, ",", "", len(strSlice)*5)
 
 	return result
+}
+
+func (fs FormatterStylish) sortedChildKeys(node *analyzer.DiffNode) []string {
+	keys := slices.Collect(maps.Keys(node.Children))
+	slices.Sort(keys)
+	return keys
+}
+
+func getIndent(indent int) string {
+	return strings.Repeat(" ", 4*indent)
+}
+
+func getMarkedIndent(indent int) string {
+	indentStr := strings.Repeat(" ", 4*(indent-1))
+	indentStr += " "
+	return indentStr
 }

@@ -6,7 +6,7 @@ import (
 	"os"
 
 	// Parser "code/internal/parser"
-	"code/internal/cli"
+	"code/internal/app"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 	   	fmt.Println(data)
 	*/
 
-	app := cli.NewApp()
+	app := app.New()
 
 	err := app.Run(context.Background(), os.Args)
 	if err != nil {

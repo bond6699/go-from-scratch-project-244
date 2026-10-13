@@ -56,12 +56,6 @@ func (fp FormatterPlain) formatNode(builder *strings.Builder, path []string, nod
 	}
 }
 
-func (fp FormatterPlain) sortedChildKeys(node *analyzer.DiffNode) []string {
-	keys := slices.Collect(maps.Keys(node.Children))
-	slices.Sort(keys)
-	return keys
-}
-
 func (fp FormatterPlain) formatValue(value any, hasChild bool) any {
 	_, isMap := value.(map[string]any)
 	if hasChild || isMap {
@@ -72,4 +66,10 @@ func (fp FormatterPlain) formatValue(value any, hasChild bool) any {
 		value = fmt.Sprintf("'%s'", v)
 	}
 	return value
+}
+
+func (fp FormatterPlain) sortedChildKeys(node *analyzer.DiffNode) []string {
+	keys := slices.Collect(maps.Keys(node.Children))
+	slices.Sort(keys)
+	return keys
 }

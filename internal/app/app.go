@@ -1,4 +1,4 @@
-package cli
+package app
 
 import (
 	"context"
@@ -11,12 +11,6 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-var formatsMap map[string]struct{} = map[string]struct{}{
-	"stylish": {},
-	"plain":   {},
-	"json":    {},
-}
-
 func getArgs(cmd *cli.Command) (string, string, string, error) {
 	filepath1 := cmd.StringArg("filepath1")
 	filepath2 := cmd.StringArg("filepath2")
@@ -26,18 +20,14 @@ func getArgs(cmd *cli.Command) (string, string, string, error) {
 		return "", "", "", fmt.Errorf("invalid argument count")
 	}
 
-	if format == "" {
-		format = "stylish"
-	}
-
-	if _, ok := formatsMap[format]; !ok {
-		return filepath1, filepath2, format, fmt.Errorf("invalid format")
+	if !formatter.IsValidFormat(format) {
+		return "", "", "", formatter.ErrInvalidFormat
 	}
 
 	return filepath1, filepath2, format, nil
 }
 
-func actionLogic(ctx context.Context, cmd *cli.Command) error {
+func runDiff(ctx context.Context, cmd *cli.Command) error {
 	fp1, fp2, format, err := getArgs(cmd)
 	if err != nil {
 		_ = cli.ShowRootCommandHelp(cmd)
@@ -71,7 +61,7 @@ func actionLogic(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func NewApp() *cli.Command {
+func New() *cli.Command {
 	app := &cli.Command{
 		Name:      "gendiff",
 		Usage:     "Compares two configuration files and shows a difference.",
@@ -92,7 +82,7 @@ func NewApp() *cli.Command {
 				Usage: "output format (default: \"stylish\")",
 			},
 		},
-		Action: actionLogic,
+		Action: runDiff,
 	}
 
 	return app
