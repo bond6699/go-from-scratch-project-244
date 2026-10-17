@@ -17,5 +17,6 @@ func (FormatterJSON) Format(node *analyzer.DiffNode) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return string(resultBytes), nil
 }

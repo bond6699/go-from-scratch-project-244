@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
 	"code/internal/analyzer"
 	"code/internal/formatter"
@@ -11,37 +13,29 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func getArgs(cmd *cli.Command) (string, string, string, error) {
+func getArgs(cmd *cli.Command) (string, string, string) {
 	filepath1 := cmd.StringArg("filepath1")
 	filepath2 := cmd.StringArg("filepath2")
 	format := cmd.String("format")
 
-	if filepath1 == "" || filepath2 == "" {
-		return "", "", "", fmt.Errorf("invalid argument count")
+	if format == "" {
+		format = "stylish"
 	}
 
-	if !formatter.IsValidFormat(format) {
-		return "", "", "", formatter.ErrInvalidFormat
-	}
-
-	return filepath1, filepath2, format, nil
+	return filepath1, filepath2, format
 }
 
 func runDiff(ctx context.Context, cmd *cli.Command) error {
-	fp1, fp2, format, err := getArgs(cmd)
-	if err != nil {
-		_ = cli.ShowRootCommandHelp(cmd)
-		return err
-	}
+	filepath1, filepath2, format := getArgs(cmd)
 
-	data1, err := parser.Parse(fp1)
+	data1, err := parser.Parse(filepath1)
 	if err != nil {
 		_ = cli.ShowRootCommandHelp(cmd)
 		return err
 	}
 	data1 = parser.Normalize(data1)
 
-	data2, err := parser.Parse(fp2)
+	data2, err := parser.Parse(filepath2)
 	if err != nil {
 		_ = cli.ShowRootCommandHelp(cmd)
 		return err
@@ -52,13 +46,23 @@ func runDiff(ctx context.Context, cmd *cli.Command) error {
 
 	result, err := formatter.Format(format, diff)
 	if err != nil {
-		fmt.Print(err)
 		return err
 	}
 
 	fmt.Println(result)
 
 	return nil
+}
+
+func validatePath(path string) bool {
+	path = strings.TrimSpace(path)
+	if !strings.HasSuffix(path, ".json") && !strings.HasSuffix(path, ".yml") && !strings.HasSuffix(path, ".yaml") {
+		return false
+	}
+
+	_, err := os.Stat(path)
+
+	return err == nil
 }
 
 func New() *cli.Command {
@@ -76,10 +80,33 @@ func New() *cli.Command {
 				UsageText: "<filepath2>",
 			},
 		},
+
+		ArgValidator: func(_ context.Context, cmd *cli.Command) error {
+			if cmd.Args().Len() != 2 {
+				return fmt.Errorf("expected exactly 2 file paths, got %d", cmd.Args().Len())
+			}
+
+			for _, path := range cmd.Args().Slice() {
+				if !validatePath(path) {
+					return fmt.Errorf("expected incorrect file path, got %s", path)
+				}
+			}
+
+			return nil
+		},
+
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name: "format", Aliases: []string{"f"},
 				Usage: "output format (default: \"stylish\")",
+				Validator: func(format string) error {
+					switch format {
+					case "stylish", "plain", "json":
+						return nil
+					default:
+						return fmt.Errorf("format '%s' is not supported", format)
+					}
+				},
 			},
 		},
 		Action: runDiff,

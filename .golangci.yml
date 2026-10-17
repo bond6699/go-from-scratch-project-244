@@ -1,0 +1,31 @@
+
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  relative-path-mode: gomod
+
+linters:
+  default: standard
+
+  exclusions:
+    generated: strict
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes:
+        - code
+
+  exclusions:
+    generated: strict
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  uniq-by-line: false

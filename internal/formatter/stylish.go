@@ -20,9 +20,11 @@ func (fs FormatterStylish) Format(node *analyzer.DiffNode) (string, error) {
 	builder := &strings.Builder{}
 
 	builder.WriteString("{")
-	for _, key := range fs.sortedChildKeys(node) {
+
+	for _, key := range fs.getSortedChildKeys(node) {
 		fs.formatNode(builder, 1, node.Children[key])
 	}
+
 	builder.WriteString("\n}")
 
 	return builder.String(), nil
@@ -30,23 +32,47 @@ func (fs FormatterStylish) Format(node *analyzer.DiffNode) (string, error) {
 
 func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node *analyzer.DiffNode) {
 	switch node.Status {
-	case analyzer.Added:
-		fmt.Fprintf(builder, "\n%s + %s: %v", getMarkedIndent(indent), node.Key, fs.formatValue(node.NewValue, indent+1))
-	case analyzer.Deleted:
-		fmt.Fprintf(builder, "\n%s - %s: %v", getMarkedIndent(indent), node.Key, fs.formatValue(node.OldValue, indent+1))
-	case analyzer.Changed:
-		fmt.Fprintf(builder, "\n%s - %s: %v", getMarkedIndent(indent), node.Key, fs.formatValue(node.OldValue, indent+1))
-		fmt.Fprintf(builder, "\n%s + %s: %v", getMarkedIndent(indent), node.Key, fs.formatValue(node.NewValue, indent+1))
-	case analyzer.Unchanged:
-		if node.Children != nil {
-			fmt.Fprintf(builder, "\n%s%s: {", getIndent(indent), node.Key)
-			for _, key := range fs.sortedChildKeys(node) {
-				fs.formatNode(builder, indent+1, node.Children[key])
-			}
-			fmt.Fprintf(builder, "\n%s}", getIndent(indent))
-			return
+	case analyzer.Container:
+		fmt.Fprintf(builder, "\n%s%s: {", getIndent(indent), node.Key)
+
+		for _, key := range fs.getSortedChildKeys(node) {
+			fs.formatNode(builder, indent+1, node.Children[key])
 		}
 
+		fmt.Fprintf(builder, "\n%s}", getIndent(indent))
+
+	case analyzer.Added:
+		fmt.Fprintf(
+			builder,
+			"\n%s + %s: %v",
+			getMarkedIndent(indent),
+			node.Key,
+			fs.formatValue(node.NewValue, indent+1),
+		)
+	case analyzer.Deleted:
+		fmt.Fprintf(
+			builder,
+			"\n%s - %s: %v",
+			getMarkedIndent(indent),
+			node.Key,
+			fs.formatValue(node.OldValue, indent+1),
+		)
+	case analyzer.Changed:
+		fmt.Fprintf(
+			builder,
+			"\n%s - %s: %v",
+			getMarkedIndent(indent),
+			node.Key,
+			fs.formatValue(node.OldValue, indent+1),
+		)
+		fmt.Fprintf(
+			builder,
+			"\n%s + %s: %v",
+			getMarkedIndent(indent),
+			node.Key,
+			fs.formatValue(node.NewValue, indent+1),
+		)
+	case analyzer.Unchanged:
 		fmt.Fprintf(builder, "\n%s%s: %v", getIndent(indent), node.Key, fs.formatValue(node.OldValue, indent+1))
 	}
 }
@@ -64,6 +90,7 @@ func (fs FormatterStylish) formatValue(value any, indent int) any {
 
 func (fs FormatterStylish) formatNestedValue(value any, indent int) string {
 	bytes, _ := json.MarshalIndent(value, "", getIndent(1))
+
 	strSlice := strings.Split(string(bytes), "\n")
 	for i, row := range strSlice {
 		if i != 0 {
@@ -78,9 +105,10 @@ func (fs FormatterStylish) formatNestedValue(value any, indent int) string {
 	return result
 }
 
-func (fs FormatterStylish) sortedChildKeys(node *analyzer.DiffNode) []string {
+func (fs FormatterStylish) getSortedChildKeys(node *analyzer.DiffNode) []string {
 	keys := slices.Collect(maps.Keys(node.Children))
 	slices.Sort(keys)
+
 	return keys
 }
 
@@ -91,5 +119,6 @@ func getIndent(indent int) string {
 func getMarkedIndent(indent int) string {
 	indentStr := strings.Repeat(" ", 4*(indent-1))
 	indentStr += " "
+
 	return indentStr
 }
