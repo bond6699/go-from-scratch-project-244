@@ -6,107 +6,143 @@ import (
 	"testing"
 )
 
-func assertError(t *testing.T, wantErr bool, got error) {
-	t.Helper()
-	if wantErr && got == nil {
-		t.Fatal("expected an error, got nil")
-	}
-
-	if !wantErr && got != nil {
-		t.Fatalf("unexpected error: %v", got)
-	}
-}
-
-func assertParserValue(t *testing.T, want map[string]any, got map[string]any) {
-	t.Helper()
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
-	}
-}
-
-func TestJsonParser(t *testing.T) {
+func TestParsers(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   string
-		want    map[string]any
-		wantErr bool
+		name     string
+		filepath string
+		parser   Parser
+		want     map[string]any
+		wantErr  bool
 	}{
 		{
-			"valid JSON value",
-			`{"common": {"setting1": "Value 1", "setting2": 200, "setting3": true}}`,
+			"valid simple JSON value",
+			"testdata/json/simple.json",
+			JSONParser{},
+			map[string]any{
+				"host":    "hexlet.io",
+				"timeout": 50.0,
+				"proxy":   "123.234.53.22",
+				"follow":  false,
+				"secret":  nil,
+			},
+			false,
+		},
+		{
+			"valid complex JSON value",
+			"testdata/json/complex.json",
+			JSONParser{},
 			map[string]any{
 				"common": map[string]any{
 					"setting1": "Value 1",
 					"setting2": 200.0,
 					"setting3": true,
+					"setting6": map[string]any{
+						"key": "value",
+						"doge": map[string]any{
+							"wow": "",
+						},
+					},
+				},
+				"group1": map[string]any{
+					"baz": "bas",
+					"foo": "bar",
+					"nest": map[string]any{
+						"key": "value",
+					},
+					"secret": nil,
+				},
+				"group2": map[string]any{
+					"abc": 12345.0,
+					"deep": map[string]any{
+						"id": 45.0,
+					},
 				},
 			},
 			false,
 		},
 		{
 			"invalid JSON value",
-			`"common": {"setting1": "Value 1", "sett`,
+			"testdata/json/invalid.json",
+			JSONParser{},
 			map[string]any{},
 			true,
 		},
 		{
-			"empty", "{}", map[string]any{}, false,
+			"empty",
+			"testdata/json/empty.json",
+			JSONParser{},
+			map[string]any{},
+			false,
 		},
-	}
-
-	for _, td := range tests {
-		t.Run(td.name, func(t *testing.T) {
-			got, err := JSONParser{}.Parse([]byte(td.input))
-			assertError(t, td.wantErr, err)
-
-			if !td.wantErr {
-				assertParserValue(t, td.want, got)
-			}
-		})
-	}
-}
-
-func TestYamlParser(t *testing.T) {
-	tests := []struct {
-		name    string
-		input   string
-		want    map[string]any
-		wantErr bool
-	}{
 		{
-			"valid YAML value",
-			`
-common:
-  setting1: "Value 1"
-  setting2: 200
-  setting3: true`,
+			"simple YAML value",
+			"testdata/yaml/simple.yaml",
+			YamlParser{},
+			map[string]any{
+				"host":    "hexlet.io",
+				"timeout": 50,
+				"proxy":   "123.234.53.22",
+				"follow":  false,
+				"secret":  nil,
+			},
+			false,
+		},
+		{
+			"complex YAML value",
+			"testdata/yaml/complex.yaml",
+			YamlParser{},
 			map[string]any{
 				"common": map[string]any{
 					"setting1": "Value 1",
 					"setting2": 200,
 					"setting3": true,
+					"setting6": map[string]any{
+						"key": "value",
+						"doge": map[string]any{
+							"wow": "",
+						},
+					},
+				},
+				"group1": map[string]any{
+					"baz": "bas",
+					"foo": "bar",
+					"nest": map[string]any{
+						"key": "value",
+					},
+					"secret": nil,
+				},
+				"group2": map[string]any{
+					"abc": 12345,
+					"deep": map[string]any{
+						"id": 45,
+					},
 				},
 			},
 			false,
 		},
 		{
 			"invalid YAML value",
-			`
-common
-  setting1 - Value 1"
-  setting2: 200
-  setting3: true`,
+			"testdata/yaml/invalid.yaml",
+			YamlParser{},
 			map[string]any{},
 			true,
 		},
 		{
-			"empty", "", map[string]any{}, false,
+			"empty YAML",
+			"testdata/yaml/empty.yaml",
+			YamlParser{},
+			map[string]any{},
+			false,
 		},
 	}
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			got, err := YamlParser{}.Parse([]byte(td.input))
+			bytes, err := os.ReadFile(td.filepath)
+			if err != nil {
+				assertError(t, false, err)
+			}
+			got, err := td.parser.Parse(bytes)
 			assertError(t, td.wantErr, err)
 
 			if !td.wantErr {
@@ -164,6 +200,17 @@ func TestNormalize(t *testing.T) {
 			},
 		},
 		{
+			"slice []any",
+			map[string]any{
+				"numbers": []any{1, 6, 9, 22.6},
+				"others":  []any{"hello", "world", nil},
+			},
+			map[string]any{
+				"numbers": []any{1.0, 6.0, 9.0, 22.6},
+				"others":  []any{"hello", "world", "null"},
+			},
+		},
+		{
 			"null value",
 			map[string]any{
 				"dataNull": nil,
@@ -175,34 +222,58 @@ func TestNormalize(t *testing.T) {
 		{
 			"mixed value",
 			map[string]any{
-				"name": "Jany",
-				"age":  23,
-				"hobby": []any{
-					map[string]any{
-						"name":     "Go Code",
-						"expYears": 2,
-					},
-					map[string]any{
-						"name":     "Read Book",
-						"expYears": 10,
+				"common": map[string]any{
+					"setting1": "Value 1",
+					"setting2": 200,
+					"setting3": true,
+					"setting6": map[string]any{
+						"key": "value",
+						"doge": map[string]any{
+							"wow": "",
+						},
 					},
 				},
-				"Secret": nil,
+				"group1": map[string]any{
+					"baz": "bas",
+					"foo": "bar",
+					"nest": map[string]any{
+						"key": "value",
+					},
+					"secret": nil,
+				},
+				"group2": map[string]any{
+					"abc": 12345,
+					"deep": map[string]any{
+						"id": 45,
+					},
+				},
 			},
 			map[string]any{
-				"name": "Jany",
-				"age":  float64(23.0),
-				"hobby": []any{
-					map[string]any{
-						"name":     "Go Code",
-						"expYears": float64(2.0),
-					},
-					map[string]any{
-						"name":     "Read Book",
-						"expYears": float64(10.0),
+				"common": map[string]any{
+					"setting1": "Value 1",
+					"setting2": 200.0,
+					"setting3": true,
+					"setting6": map[string]any{
+						"key": "value",
+						"doge": map[string]any{
+							"wow": "",
+						},
 					},
 				},
-				"Secret": "null",
+				"group1": map[string]any{
+					"baz": "bas",
+					"foo": "bar",
+					"nest": map[string]any{
+						"key": "value",
+					},
+					"secret": "null",
+				},
+				"group2": map[string]any{
+					"abc": 12345.0,
+					"deep": map[string]any{
+						"id": 45.0,
+					},
+				},
 			},
 		},
 	}
@@ -217,80 +288,131 @@ func TestNormalize(t *testing.T) {
 func TestParseAndNormalize(t *testing.T) {
 	tests := []struct {
 		name     string
-		filename string
-		content  string
+		filepath string
 		want     map[string]any
 		wantErr  bool
 	}{
 		{
-			"valid JSON file",
-			"config-*.json",
-			`{"common": {"setting1": "Value 1", "setting2": 200, "setting3": true, "setting4": null}}`,
+			"valid simple JSON file",
+			"testdata/json/simple.json",
+			map[string]any{
+				"host":    "hexlet.io",
+				"timeout": 50.0,
+				"proxy":   "123.234.53.22",
+				"follow":  false,
+				"secret":  "null",
+			},
+			false,
+		},
+		{
+			"valid complex JSON file",
+			"testdata/json/complex.json",
 			map[string]any{
 				"common": map[string]any{
 					"setting1": "Value 1",
 					"setting2": 200.0,
 					"setting3": true,
-					"setting4": "null",
+					"setting6": map[string]any{
+						"key": "value",
+						"doge": map[string]any{
+							"wow": "",
+						},
+					},
+				},
+				"group1": map[string]any{
+					"baz": "bas",
+					"foo": "bar",
+					"nest": map[string]any{
+						"key": "value",
+					},
+					"secret": "null",
+				},
+				"group2": map[string]any{
+					"abc": 12345.0,
+					"deep": map[string]any{
+						"id": 45.0,
+					},
 				},
 			},
 			false,
 		},
 		{
 			"invalid JSON file",
-			"config-*.json",
-			`{"common": {"setting1": "Value 1", "setting2": 200, "se`,
+			"testdata/json/invalid.json",
 			map[string]any{},
 			true,
 		},
 		{
 			"empty JSON file",
-			"config-*.json",
-			"{}",
+			"testdata/json/empty.json",
 			map[string]any{},
 			false,
 		},
 		{
-			"valid YAML file",
-			"config-*.yml",
-			`
-common:
-  setting1: "Value 1"
-  setting2: 200
-  setting3: true
-  setting4: null`,
+			"valid simple YAML file",
+			"testdata/yaml/simple.yaml",
+			map[string]any{
+				"host":    "hexlet.io",
+				"timeout": 50.0,
+				"proxy":   "123.234.53.22",
+				"follow":  false,
+				"secret":  "null",
+			},
+			false,
+		},
+		{
+			"valid complex YAML file",
+			"testdata/yaml/complex.yaml",
 			map[string]any{
 				"common": map[string]any{
 					"setting1": "Value 1",
 					"setting2": 200.0,
 					"setting3": true,
-					"setting4": "null",
+					"setting6": map[string]any{
+						"key": "value",
+						"doge": map[string]any{
+							"wow": "",
+						},
+					},
+				},
+				"group1": map[string]any{
+					"baz": "bas",
+					"foo": "bar",
+					"nest": map[string]any{
+						"key": "value",
+					},
+					"secret": "null",
+				},
+				"group2": map[string]any{
+					"abc": 12345.0,
+					"deep": map[string]any{
+						"id": 45.0,
+					},
 				},
 			},
 			false,
 		},
 		{
 			"invalid YAML file",
-			"config-*.yaml",
-			`
-common
-  setting1 - "Value 1"
-  setting2: 200
-  settin`,
+			"testdata/yaml/invalid.yaml",
 			map[string]any{},
 			true,
 		},
 		{
 			"empty YAML file",
-			"config-*.yml",
-			"",
+			"testdata/yaml/empty.yaml",
 			map[string]any{},
 			false,
 		},
 		{
-			"invalid file format",
-			"data.txt",
-			"Hello, World!",
+			"unsupported file",
+			"testdata/unsupported.txt",
+			map[string]any{},
+			true,
+		},
+		{
+			"invalid filepath",
+			"testdata/unsupp",
 			map[string]any{},
 			true,
 		},
@@ -298,21 +420,29 @@ common
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			file, err := os.CreateTemp(t.TempDir(), td.filename)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			_, err = file.Write([]byte(td.content))
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			got, err := Parse(file.Name())
+			got, err := Parse(td.filepath)
 			assertError(t, td.wantErr, err)
 			if !td.wantErr {
 				assertParserValue(t, td.want, Normalize(got))
 			}
 		})
+	}
+}
+
+func assertError(t *testing.T, wantErr bool, got error) {
+	t.Helper()
+	if wantErr && got == nil {
+		t.Fatal("expected an error, got nil")
+	}
+
+	if !wantErr && got != nil {
+		t.Fatalf("unexpected error: %v", got)
+	}
+}
+
+func assertParserValue(t *testing.T, want map[string]any, got map[string]any) {
+	t.Helper()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v, want %v", got, want)
 	}
 }

@@ -72,7 +72,7 @@ func AnalyzeValue(key string, oldValue any, oldExist bool, newValue any, newExis
 
 	if oldIsArray && newIsArray {
 		if reflect.DeepEqual(oldArray, newArray) {
-			return NewDiffNode(key, Unchanged, oldArray, newArray)
+			return NewDiffNode(key, Unchanged, oldArray, nil)
 		}
 
 		return NewDiffNode(key, Changed, oldArray, newArray)

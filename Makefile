@@ -10,3 +10,5 @@ lint-fix:
 	golangci-lint run --fix
 test:
 	go test -cover -v ./...
+test-with-cover:
+	go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out
