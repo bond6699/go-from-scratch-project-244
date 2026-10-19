@@ -415,8 +415,9 @@ func TestAnalyze(t *testing.T) {
 	}
 }
 
-func assertAnalyzerValue(t *testing.T, want DiffNode, got DiffNode) {
+func assertAnalyzerValue(t *testing.T, want, got DiffNode) {
 	t.Helper()
+
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got:\n%#v\nwant:\n%#v", got, want)
 	}

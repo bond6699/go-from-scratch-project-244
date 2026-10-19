@@ -13,10 +13,10 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func getArgs(cmd *cli.Command) (string, string, string) {
-	filepath1 := cmd.StringArg("filepath1")
-	filepath2 := cmd.StringArg("filepath2")
-	format := cmd.String("format")
+func getArgs(cmd *cli.Command) (filepath1, filepath2, format string) {
+	filepath1 = cmd.StringArg("filepath1")
+	filepath2 = cmd.StringArg("filepath2")
+	format = cmd.String("format")
 
 	if format == "" {
 		format = "stylish"
@@ -33,6 +33,7 @@ func runDiff(ctx context.Context, cmd *cli.Command) error {
 		_ = cli.ShowRootCommandHelp(cmd)
 		return err
 	}
+
 	data1 = parser.Normalize(data1)
 
 	data2, err := parser.Parse(filepath2)
@@ -40,6 +41,7 @@ func runDiff(ctx context.Context, cmd *cli.Command) error {
 		_ = cli.ShowRootCommandHelp(cmd)
 		return err
 	}
+
 	data2 = parser.Normalize(data2)
 
 	diff := analyzer.Analyze(data1, data2)

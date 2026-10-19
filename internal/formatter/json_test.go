@@ -379,6 +379,7 @@ func TestJSONFormat(t *testing.T) {
 		t.Run(td.name, func(t *testing.T) {
 			got, err := FormatterJSON{}.Format(&td.input)
 			assertError(t, td.wantErr, err)
+
 			if got != td.want {
 				t.Errorf("got:\n%s\nwant:\n%s", got, td.want)
 			}
@@ -388,6 +389,7 @@ func TestJSONFormat(t *testing.T) {
 
 func assertError(t *testing.T, wantErr bool, got error) {
 	t.Helper()
+
 	if wantErr && got == nil {
 		t.Fatal("expected an error, got nil")
 	}

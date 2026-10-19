@@ -142,6 +142,7 @@ func TestParsers(t *testing.T) {
 			if err != nil {
 				assertError(t, false, err)
 			}
+
 			got, err := td.parser.Parse(bytes)
 			assertError(t, td.wantErr, err)
 
@@ -422,6 +423,7 @@ func TestParseAndNormalize(t *testing.T) {
 		t.Run(td.name, func(t *testing.T) {
 			got, err := Parse(td.filepath)
 			assertError(t, td.wantErr, err)
+
 			if !td.wantErr {
 				assertParserValue(t, td.want, Normalize(got))
 			}
@@ -431,6 +433,7 @@ func TestParseAndNormalize(t *testing.T) {
 
 func assertError(t *testing.T, wantErr bool, got error) {
 	t.Helper()
+
 	if wantErr && got == nil {
 		t.Fatal("expected an error, got nil")
 	}
@@ -440,8 +443,9 @@ func assertError(t *testing.T, wantErr bool, got error) {
 	}
 }
 
-func assertParserValue(t *testing.T, want map[string]any, got map[string]any) {
+func assertParserValue(t *testing.T, want, got map[string]any) {
 	t.Helper()
+
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}

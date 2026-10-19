@@ -1,31 +1,103 @@
-
+# .golangci.yml
 version: "2"
 
 run:
   timeout: 5m
   tests: true
-  relative-path-mode: gomod
 
 linters:
   default: standard
+  enable:
+    # базовая корректность
+    - errcheck
+    - staticcheck
+    - ineffassign
+    - unused
+    - unparam
 
-  exclusions:
-    generated: strict
+    # ошибки и wrapping
+    - errorlint
+    - errname
+    - nilerr
+    - nilnil
+    - nilnesserr
+
+    # стиль и читаемость
+    - revive
+    - gocritic
+    - misspell
+    - nlreturn
+    - wsl_v5
+
+    # сложность
+    - gocyclo
+    - gocognit
+    - nestif
+    - dupl
+
+    # ресурсы / context
+    - bodyclose
+    - noctx
+    - durationcheck
+
+    # тесты
+    - testifylint
+    - thelper
+
+    # современный Go
+    - modernize
+    - usestdlibvars
+    - intrange
+
+  settings:
+    nlreturn:
+      block-size: 3
+
+    gocyclo:
+      min-complexity: 10
+
+    gocognit:
+      min-complexity: 15
+
+    nestif:
+      min-complexity: 4
+
+    dupl:
+      threshold: 200
+
+    revive:
+      rules:
+        - name: blank-imports
+        - name: errorf
+        - name: error-naming
+        - name: error-return
+        - name: exported
+          disabled: true
+
+    gocritic:
+      enable-all: true
+
+    testifylint:
+      enable-all: true
 
 formatters:
   enable:
-    - gofmt
+    - gofumpt
     - goimports
+    - golines
 
   settings:
+    gofumpt:
+      extra:
+        group-params: true
+
+    golines:
+      max-len: 120
+      tab-len: 4
+      shorten-comments: false
+      reformat-tags: true
+      chain-split-dots: true
+
     goimports:
       local-prefixes:
         - code
-
-  exclusions:
-    generated: strict
-
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
-  uniq-by-line: false
