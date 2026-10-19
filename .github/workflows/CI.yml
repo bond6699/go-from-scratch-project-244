@@ -6,32 +6,33 @@ on:
   pull_request:
     branches: [main, master]
 
+permissions:
+  contents: read
+
 jobs:
-  setup_go:
-    name: Set up Go
-    uses: actions/setup-go@v6
-    with:
-      go-version: '1.27.1'
   build_test:
     name: Build and Test
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-go@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
           cache: true
-      
+
       - name: Download dependencies
         run: go mod download
-      
+
       - name: Build
         run: make build
-      
+
       - name: Test
         run: go test -v -race -coverprofile=coverage.out ./...
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
@@ -41,19 +42,22 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-go@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
           cache: true
-      
+
       - name: Download dependencies
         run: go mod download
-      
+
       - name: Lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: latest
+          version: v2.15.0
           args: --timeout=5m
