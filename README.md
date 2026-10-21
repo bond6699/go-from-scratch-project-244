@@ -176,5 +176,4 @@ make build
 
 ## Демонстрация
 
-
-[![Демонстрация GenDiff](https://asciinema.org/a/B10iyrpBMxRNYLEX.svg)](https://asciinema.org/a/B10iyrpBMxRNYLEX)
+[![asciicast](https://asciinema.org/a/B10iyrpBMxRNYLEX.svg)](https://asciinema.org/a/B10iyrpBMxRNYLEX)
