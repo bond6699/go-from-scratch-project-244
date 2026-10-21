@@ -22,7 +22,7 @@ func (fp FormatterPlain) Format(node *analyzer.DiffNode) (string, error) {
 		fp.formatNode(&builder, []string{}, node.Children[key])
 	}
 
-	return builder.String(), nil
+	return strings.TrimSuffix(builder.String(), "\n"), nil
 }
 
 func (fp FormatterPlain) formatNode(builder *strings.Builder, path []string, node *analyzer.DiffNode) {
@@ -37,17 +37,17 @@ func (fp FormatterPlain) formatNode(builder *strings.Builder, path []string, nod
 
 	case analyzer.Added:
 		fmt.Fprintf(
-			builder, "Property '%s' was added with value: %v\n",
+			builder, "Property '%s' was added with value: %v",
 			strings.Join(path, "."),
 			fp.formatValue(node.NewValue, hasChild),
 		)
 
 	case analyzer.Deleted:
-		fmt.Fprintf(builder, "Property '%s' was removed\n", strings.Join(path, "."))
+		fmt.Fprintf(builder, "Property '%s' was removed", strings.Join(path, "."))
 
 	case analyzer.Changed:
 		fmt.Fprintf(
-			builder, "Property '%s' was updated. From %v to %v\n",
+			builder, "Property '%s' was updated. From %v to %v",
 			strings.Join(path, "."),
 			fp.formatValue(node.OldValue, hasChild),
 			fp.formatValue(node.NewValue, hasChild),
