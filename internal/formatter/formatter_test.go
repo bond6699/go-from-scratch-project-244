@@ -79,7 +79,7 @@ func TestFormat(t *testing.T) {
 					},
 				},
 			},
-			"Property 'timeout' was updated. From 50 to 100\n",
+			"Property 'timeout' was updated. From 50 to 100",
 			false,
 		},
 		{
