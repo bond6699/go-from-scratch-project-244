@@ -6,9 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"code/internal/analyzer"
-	"code/internal/formatter"
-	"code/internal/parser"
+	"code"
 
 	"github.com/urfave/cli/v3"
 )
@@ -28,26 +26,9 @@ func getArgs(cmd *cli.Command) (filepath1, filepath2, format string) {
 func runDiff(ctx context.Context, cmd *cli.Command) error {
 	filepath1, filepath2, format := getArgs(cmd)
 
-	data1, err := parser.Parse(filepath1)
+	result, err := code.Diff(filepath1, filepath2, format)
 	if err != nil {
 		_ = cli.ShowRootCommandHelp(cmd)
-		return err
-	}
-
-	data1 = parser.Normalize(data1)
-
-	data2, err := parser.Parse(filepath2)
-	if err != nil {
-		_ = cli.ShowRootCommandHelp(cmd)
-		return err
-	}
-
-	data2 = parser.Normalize(data2)
-
-	diff := analyzer.Analyze(data1, data2)
-
-	result, err := formatter.Format(format, diff)
-	if err != nil {
 		return err
 	}
 
