@@ -66,12 +66,14 @@ func New() *cli.Command {
 
 		ArgValidator: func(_ context.Context, cmd *cli.Command) error {
 			if cmd.Args().Len() != 2 {
+				_ = cli.ShowRootCommandHelp(cmd)
 				return fmt.Errorf("expected exactly 2 file paths, got %d", cmd.Args().Len())
 			}
 
 			for _, path := range cmd.Args().Slice() {
 				if !validatePath(path) {
-					return fmt.Errorf("expected incorrect file path, got %s", path)
+					_ = cli.ShowRootCommandHelp(cmd)
+					return fmt.Errorf("incorrect file path, got %s", path)
 				}
 			}
 
@@ -82,15 +84,19 @@ func New() *cli.Command {
 			&cli.StringFlag{
 				Name: "format", Aliases: []string{"f"},
 				Usage: "output format (default: \"stylish\")",
-				Validator: func(format string) error {
-					switch format {
-					case "stylish", "plain", "json":
-						return nil
-					default:
-						return fmt.Errorf("format '%s' is not supported", format)
-					}
-				},
+				Value: "stylish",
 			},
+		},
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			format := cmd.String("format")
+
+			switch format {
+			case "stylish", "plain", "json":
+				return ctx, nil
+			default:
+				_ = cli.ShowRootCommandHelp(cmd)
+				return ctx, fmt.Errorf("format %q is not supported", format)
+			}
 		},
 		Action: runDiff,
 	}
