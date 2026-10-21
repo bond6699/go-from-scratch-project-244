@@ -1,6 +1,6 @@
 module code
 
-go 1.27.1
+go 1.26.10
 
 require (
 	github.com/urfave/cli/v3 v3.14.0
