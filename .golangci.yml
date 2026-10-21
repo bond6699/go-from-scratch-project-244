@@ -82,8 +82,8 @@ linters:
 
 formatters:
   enable:
-    - gofumpt
     - goimports
+#    - gofumpt
     - golines
 
   settings:
