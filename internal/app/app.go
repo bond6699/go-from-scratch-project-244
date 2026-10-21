@@ -26,7 +26,7 @@ func getArgs(cmd *cli.Command) (filepath1, filepath2, format string) {
 func runDiff(ctx context.Context, cmd *cli.Command) error {
 	filepath1, filepath2, format := getArgs(cmd)
 
-	result, err := code.Diff(filepath1, filepath2, format)
+	result, err := code.GenDiff(filepath1, filepath2, format)
 	if err != nil {
 		_ = cli.ShowRootCommandHelp(cmd)
 		return err

@@ -6,7 +6,7 @@ import (
 	"code/internal/parser"
 )
 
-func Diff(filepath1, filepath2, format string) (result string, err error) {
+func GenDiff(filepath1, filepath2, format string) (result string, err error) {
 	data1, err := parser.Parse(filepath1)
 	if err != nil {
 		return "", err
