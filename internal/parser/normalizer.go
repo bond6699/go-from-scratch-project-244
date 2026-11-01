@@ -16,6 +16,7 @@ func NormalizeValue(value any) any {
 		for i := range v {
 			v[i] = NormalizeValue(v[i])
 		}
+
 		return v
 
 	case int:

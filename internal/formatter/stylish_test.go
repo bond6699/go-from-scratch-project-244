@@ -114,7 +114,7 @@ func TestStylishFormat(t *testing.T) {
 		t.Run(td.name, func(t *testing.T) {
 			got, err := FormatterStylish{}.Format(&td.input)
 			assert.Equal(t, td.want, got)
-			require.ErrorIs(t, err, nil)
+			require.NoError(t, err)
 		})
 	}
 }

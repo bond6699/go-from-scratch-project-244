@@ -141,12 +141,14 @@ func TestFormat(t *testing.T) {
 func ContainerNode(key string, value map[string]*analyzer.DiffNode) *analyzer.DiffNode {
 	node := analyzer.NewDiffNode(key, analyzer.Container)
 	node.Children = value
+
 	return node
 }
 
 func UnchangedNode(key string, value any) *analyzer.DiffNode {
 	node := analyzer.NewDiffNode(key, analyzer.Unchanged)
 	node.SetOldValue(value)
+
 	return node
 }
 
@@ -154,17 +156,20 @@ func ChangedNode(key string, oldValue, newValue any) *analyzer.DiffNode {
 	node := analyzer.NewDiffNode(key, analyzer.Changed)
 	node.SetOldValue(oldValue)
 	node.SetNewValue(newValue)
+
 	return node
 }
 
 func DeletedNode(key string, value any) *analyzer.DiffNode {
 	node := analyzer.NewDiffNode(key, analyzer.Deleted)
 	node.SetOldValue(value)
+
 	return node
 }
 
 func AddedNode(key string, value any) *analyzer.DiffNode {
 	node := analyzer.NewDiffNode(key, analyzer.Added)
 	node.SetNewValue(value)
+
 	return node
 }

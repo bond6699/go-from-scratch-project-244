@@ -99,6 +99,7 @@ func (fs FormatterStylish) formatNestedMap(value map[string]any, indent int) str
 	}
 
 	fmt.Fprintf(builder, "\n%s}", getIndent(indent-1))
+
 	return builder.String()
 }
 
@@ -112,6 +113,7 @@ func (fs FormatterStylish) formatNestedArray(value []any, indent int) string {
 	}
 
 	fmt.Fprintf(builder, "\n%s]", getIndent(indent-1))
+
 	return builder.String()
 }
 

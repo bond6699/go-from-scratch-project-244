@@ -81,7 +81,7 @@ func TestParsers(t *testing.T) {
 
 			got, err := td.parser.Parse(bytes)
 			require.ErrorIs(t, err, td.wantErr)
-			assert.Equal(t, got, td.want)
+			assert.Equal(t, td.want, got)
 		})
 	}
 }
@@ -102,8 +102,8 @@ func TestNewParser(t *testing.T) {
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
 			got, err := NewParser(td.input)
-			assert.ErrorIs(t, err, td.wantErr)
-			require.Equal(t, got, td.want)
+			require.ErrorIs(t, err, td.wantErr)
+			require.Equal(t, td.want, got)
 		})
 	}
 }
@@ -287,7 +287,7 @@ func TestParse(t *testing.T) {
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
 			got, err := Parse(td.filepath)
-			assert.ErrorIs(t, err, td.wantErr)
+			require.ErrorIs(t, err, td.wantErr)
 			require.Equal(t, td.want, got)
 		})
 	}
@@ -382,5 +382,6 @@ func ReadFile(filepath string) ([]byte, error) {
 	if err != nil {
 		err = fmt.Errorf("%s %w: %w", filepath, errReadFile, err)
 	}
+
 	return bytes, err
 }

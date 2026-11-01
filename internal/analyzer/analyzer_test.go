@@ -298,12 +298,14 @@ func TestAnalyze(t *testing.T) {
 func ContainerNode(key string, value map[string]*DiffNode) *DiffNode {
 	node := NewDiffNode(key, Container)
 	node.Children = value
+
 	return node
 }
 
 func UnchangedNode(key string, value any) *DiffNode {
 	node := NewDiffNode(key, Unchanged)
 	node.SetOldValue(value)
+
 	return node
 }
 
@@ -311,17 +313,20 @@ func ChangedNode(key string, oldValue, newValue any) *DiffNode {
 	node := NewDiffNode(key, Changed)
 	node.SetOldValue(oldValue)
 	node.SetNewValue(newValue)
+
 	return node
 }
 
 func DeletedNode(key string, value any) *DiffNode {
 	node := NewDiffNode(key, Deleted)
 	node.SetOldValue(value)
+
 	return node
 }
 
 func AddedNode(key string, value any) *DiffNode {
 	node := NewDiffNode(key, Added)
 	node.SetNewValue(value)
+
 	return node
 }

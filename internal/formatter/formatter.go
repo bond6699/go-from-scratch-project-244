@@ -7,9 +7,11 @@ import (
 )
 
 var (
-	errUnsupportedFormat = fmt.Errorf("format is not supported; select one of the possible options (stylish, plain, json)")
-	errCreateFormatter   = fmt.Errorf("failed to create formatter")
-	errFormatting        = fmt.Errorf("failed formatting")
+	errUnsupportedFormat = fmt.Errorf(
+		"format is not supported; select one of the possible options (stylish, plain, json)",
+	)
+	errCreateFormatter = fmt.Errorf("failed to create formatter")
+	errFormatting      = fmt.Errorf("failed formatting")
 )
 
 type Formatter interface {

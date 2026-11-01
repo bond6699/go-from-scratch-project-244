@@ -15,6 +15,7 @@ func main() {
 	err := cliApp.Run(context.Background(), os.Args)
 	if err != nil {
 		logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+
 		fmt.Println()
 		logger.Error("gendiff failed", "error", err)
 

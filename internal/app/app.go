@@ -92,7 +92,10 @@ func New() *cli.Command {
 			case "stylish", "plain", "json":
 				return ctx, nil
 			default:
-				return ctx, fmt.Errorf("format %q is not supported; select one of the possible options (stylish, plain, json)", format)
+				return ctx, fmt.Errorf(
+					"format %q is not supported; select one of the possible options (stylish, plain, json)",
+					format,
+				)
 			}
 		},
 		Action: runDiff,

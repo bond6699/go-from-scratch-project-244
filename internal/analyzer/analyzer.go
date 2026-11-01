@@ -66,12 +66,14 @@ func AnalyzeValue(key string, oldValue any, oldExist bool, newValue any, newExis
 	if !oldExist {
 		node := NewDiffNode(key, Added)
 		node.SetNewValue(newValue)
+
 		return node
 	}
 
 	if !newExist {
 		node := NewDiffNode(key, Deleted)
 		node.SetOldValue(oldValue)
+
 		return node
 	}
 
@@ -92,24 +94,28 @@ func AnalyzeValue(key string, oldValue any, oldExist bool, newValue any, newExis
 		if reflect.DeepEqual(oldArray, newArray) {
 			node := NewDiffNode(key, Unchanged)
 			node.SetOldValue(oldArray)
+
 			return node
 		}
 
 		node := NewDiffNode(key, Changed)
 		node.SetOldValue(oldArray)
 		node.SetNewValue(newArray)
+
 		return node
 	}
 
 	if oldValue == newValue {
 		node := NewDiffNode(key, Unchanged)
 		node.SetOldValue(oldValue)
+
 		return node
 	}
 
 	node := NewDiffNode(key, Changed)
 	node.SetOldValue(oldValue)
 	node.SetNewValue(newValue)
+
 	return node
 }
 
