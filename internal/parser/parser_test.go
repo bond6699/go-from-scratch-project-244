@@ -1,154 +1,87 @@
 package parser
 
 import (
+	"fmt"
 	"os"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParsers(t *testing.T) {
 	tests := []struct {
 		name     string
-		filepath string
 		parser   Parser
+		filepath string
 		want     map[string]any
-		wantErr  bool
+		wantErr  error
 	}{
 		{
-			"valid simple JSON value",
+			"JSONParser with simple value",
+			JSONParser{},
 			"testdata/json/simple.json",
-			JSONParser{},
-			map[string]any{
-				"host":    "hexlet.io",
-				"timeout": 50.0,
-				"proxy":   "123.234.53.22",
-				"follow":  false,
-				"secret":  nil,
-			},
-			false,
+			simpleJSONResult(),
+			nil,
 		},
 		{
-			"valid complex JSON value",
+			"JSONParser with complex value",
+			JSONParser{},
 			"testdata/json/complex.json",
-			JSONParser{},
-			map[string]any{
-				"common": map[string]any{
-					"setting1": "Value 1",
-					"setting2": 200.0,
-					"setting3": true,
-					"setting6": map[string]any{
-						"key": "value",
-						"doge": map[string]any{
-							"wow": "",
-						},
-					},
-				},
-				"group1": map[string]any{
-					"baz": "bas",
-					"foo": "bar",
-					"nest": map[string]any{
-						"key": "value",
-					},
-					"secret": nil,
-				},
-				"group2": map[string]any{
-					"abc": 12345.0,
-					"deep": map[string]any{
-						"id": 45.0,
-					},
-				},
-			},
-			false,
+			complexJSONResult(),
+			nil,
 		},
 		{
-			"invalid JSON value",
-			"testdata/json/invalid.json",
+			"JSONParser with empty value",
 			JSONParser{},
-			map[string]any{},
-			true,
-		},
-		{
-			"empty",
 			"testdata/json/empty.json",
+			emptyResult(),
+			nil,
+		},
+		{
+			"JSONParser with invalid value",
 			JSONParser{},
-			map[string]any{},
-			false,
+			"testdata/json/invalid.json",
+			emptyResult(),
+			errDecodeJSON,
 		},
 		{
-			"simple YAML value",
+			"YAMLParser with simple value",
+			YamlParser{},
 			"testdata/yaml/simple.yaml",
-			YamlParser{},
-			map[string]any{
-				"host":    "hexlet.io",
-				"timeout": 50,
-				"proxy":   "123.234.53.22",
-				"follow":  false,
-				"secret":  nil,
-			},
-			false,
+			simpleYamlResult(),
+			nil,
 		},
 		{
-			"complex YAML value",
+			"YAMLParser with complex value",
+			YamlParser{},
 			"testdata/yaml/complex.yaml",
-			YamlParser{},
-			map[string]any{
-				"common": map[string]any{
-					"setting1": "Value 1",
-					"setting2": 200,
-					"setting3": true,
-					"setting6": map[string]any{
-						"key": "value",
-						"doge": map[string]any{
-							"wow": "",
-						},
-					},
-				},
-				"group1": map[string]any{
-					"baz": "bas",
-					"foo": "bar",
-					"nest": map[string]any{
-						"key": "value",
-					},
-					"secret": nil,
-				},
-				"group2": map[string]any{
-					"abc": 12345,
-					"deep": map[string]any{
-						"id": 45,
-					},
-				},
-			},
-			false,
+			complexYamlResult(),
+			nil,
 		},
 		{
-			"invalid YAML value",
-			"testdata/yaml/invalid.yaml",
+			"YAMLParser with empty value",
 			YamlParser{},
-			map[string]any{},
-			true,
-		},
-		{
-			"empty YAML",
 			"testdata/yaml/empty.yaml",
+			emptyResult(),
+			nil,
+		},
+		{
+			"YAMLParser with invalid value",
 			YamlParser{},
-			map[string]any{},
-			false,
+			"testdata/yaml/invalid.yaml",
+			emptyResult(),
+			errDecodeYAML,
 		},
 	}
-
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			bytes, err := os.ReadFile(td.filepath)
-			if err != nil {
-				assertError(t, false, err)
-			}
+			bytes, err := ReadFile(td.filepath)
+			require.NoError(t, err)
 
 			got, err := td.parser.Parse(bytes)
-			assertError(t, td.wantErr, err)
-
-			if !td.wantErr {
-				assertParserValue(t, td.want, got)
-			}
+			require.ErrorIs(t, err, td.wantErr)
+			assert.Equal(t, got, td.want)
 		})
 	}
 }
@@ -158,23 +91,19 @@ func TestNewParser(t *testing.T) {
 		name    string
 		input   string
 		want    Parser
-		wantErr bool
+		wantErr error
 	}{
-		{"json file", "file/path/data.json", JSONParser{}, false},
-		{"yaml file", "file/path/data.yaml", YamlParser{}, false},
-		{"yml file", "file/path/data.yml", YamlParser{}, false},
-		{"unsupported file", "file/path/data.txt", nil, true},
-		{"empty path", "", nil, true},
+		{"NewParser with json file", "file/path/data.json", JSONParser{}, nil},
+		{"NewParser with yaml file (with .yaml ext)", "file/path/data.yaml", YamlParser{}, nil},
+		{"NewParser with yaml file (with .yml ext)", "file/path/data.yml", YamlParser{}, nil},
+		{"NewParser with unsupported file type", "file/path/data.txt", nil, errUnsupportedFileType},
 	}
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
 			got, err := NewParser(td.input)
-			assertError(t, td.wantErr, err)
-
-			if got != td.want {
-				t.Fatalf("want %T, got %T", td.want, got)
-			}
+			assert.ErrorIs(t, err, td.wantErr)
+			require.Equal(t, got, td.want)
 		})
 	}
 }
@@ -186,7 +115,7 @@ func TestNormalize(t *testing.T) {
 		want  map[string]any
 	}{
 		{
-			"int, float types",
+			"Normalize int, float types",
 			map[string]any{
 				"dataInt":    234,
 				"dataInt64":  int64(100),
@@ -201,27 +130,27 @@ func TestNormalize(t *testing.T) {
 			},
 		},
 		{
-			"slice []any",
+			"Normalize slice []any",
 			map[string]any{
 				"numbers": []any{1, 6, 9, 22.6},
 				"others":  []any{"hello", "world", nil},
 			},
 			map[string]any{
 				"numbers": []any{1.0, 6.0, 9.0, 22.6},
-				"others":  []any{"hello", "world", "null"},
+				"others":  []any{"hello", "world", nil},
 			},
 		},
 		{
-			"null value",
+			"Normalize null value (must be dont changed)",
 			map[string]any{
 				"dataNull": nil,
 			},
 			map[string]any{
-				"dataNull": "null",
+				"dataNull": nil,
 			},
 		},
 		{
-			"mixed value",
+			"Normalize complex value",
 			map[string]any{
 				"common": map[string]any{
 					"setting1": "Value 1",
@@ -267,7 +196,7 @@ func TestNormalize(t *testing.T) {
 					"nest": map[string]any{
 						"key": "value",
 					},
-					"secret": "null",
+					"secret": nil,
 				},
 				"group2": map[string]any{
 					"abc": 12345.0,
@@ -281,172 +210,177 @@ func TestNormalize(t *testing.T) {
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			assertParserValue(t, td.want, Normalize(td.input))
+			require.Equal(t, td.want, Normalize(td.input))
 		})
 	}
 }
 
-func TestParseAndNormalize(t *testing.T) {
+func TestParse(t *testing.T) {
 	tests := []struct {
 		name     string
 		filepath string
 		want     map[string]any
-		wantErr  bool
+		wantErr  error
 	}{
 		{
-			"valid simple JSON file",
+			"Parse simple JSON file",
 			"testdata/json/simple.json",
-			map[string]any{
-				"host":    "hexlet.io",
-				"timeout": 50.0,
-				"proxy":   "123.234.53.22",
-				"follow":  false,
-				"secret":  "null",
-			},
-			false,
+			simpleJSONResult(),
+			nil,
 		},
 		{
-			"valid complex JSON file",
+			"Parse complex JSON file",
 			"testdata/json/complex.json",
-			map[string]any{
-				"common": map[string]any{
-					"setting1": "Value 1",
-					"setting2": 200.0,
-					"setting3": true,
-					"setting6": map[string]any{
-						"key": "value",
-						"doge": map[string]any{
-							"wow": "",
-						},
-					},
-				},
-				"group1": map[string]any{
-					"baz": "bas",
-					"foo": "bar",
-					"nest": map[string]any{
-						"key": "value",
-					},
-					"secret": "null",
-				},
-				"group2": map[string]any{
-					"abc": 12345.0,
-					"deep": map[string]any{
-						"id": 45.0,
-					},
-				},
-			},
-			false,
+			complexJSONResult(),
+			nil,
 		},
 		{
-			"invalid JSON file",
-			"testdata/json/invalid.json",
-			map[string]any{},
-			true,
-		},
-		{
-			"empty JSON file",
+			"Parse empty JSON file",
 			"testdata/json/empty.json",
-			map[string]any{},
-			false,
+			emptyResult(),
+			nil,
 		},
 		{
-			"valid simple YAML file",
+			"Parse invalid JSON file",
+			"testdata/json/invalid.json",
+			emptyResult(),
+			errDecodeJSON,
+		},
+		{
+			"Parse valid simple YAML file",
 			"testdata/yaml/simple.yaml",
-			map[string]any{
-				"host":    "hexlet.io",
-				"timeout": 50.0,
-				"proxy":   "123.234.53.22",
-				"follow":  false,
-				"secret":  "null",
-			},
-			false,
+			simpleYamlResult(),
+			nil,
 		},
 		{
-			"valid complex YAML file",
+			"Parse valid complex YAML file",
 			"testdata/yaml/complex.yaml",
-			map[string]any{
-				"common": map[string]any{
-					"setting1": "Value 1",
-					"setting2": 200.0,
-					"setting3": true,
-					"setting6": map[string]any{
-						"key": "value",
-						"doge": map[string]any{
-							"wow": "",
-						},
-					},
-				},
-				"group1": map[string]any{
-					"baz": "bas",
-					"foo": "bar",
-					"nest": map[string]any{
-						"key": "value",
-					},
-					"secret": "null",
-				},
-				"group2": map[string]any{
-					"abc": 12345.0,
-					"deep": map[string]any{
-						"id": 45.0,
-					},
-				},
-			},
-			false,
+			complexYamlResult(),
+			nil,
 		},
 		{
-			"invalid YAML file",
-			"testdata/yaml/invalid.yaml",
-			map[string]any{},
-			true,
-		},
-		{
-			"empty YAML file",
+			"Parse empty YAML file",
 			"testdata/yaml/empty.yaml",
-			map[string]any{},
-			false,
+			emptyResult(),
+			nil,
 		},
 		{
-			"unsupported file",
+			"Parse invalid YAML file",
+			"testdata/yaml/invalid.yaml",
+			emptyResult(),
+			errDecodeYAML,
+		},
+		{
+			"Parse unsupported file",
 			"testdata/unsupported.txt",
-			map[string]any{},
-			true,
+			emptyResult(),
+			errUnsupportedFileType,
 		},
 		{
-			"invalid filepath",
+			"Parse invalid filepath",
 			"testdata/unsupp",
-			map[string]any{},
-			true,
+			emptyResult(),
+			errReadFile,
 		},
 	}
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
 			got, err := Parse(td.filepath)
-			assertError(t, td.wantErr, err)
-
-			if !td.wantErr {
-				assertParserValue(t, td.want, Normalize(got))
-			}
+			assert.ErrorIs(t, err, td.wantErr)
+			require.Equal(t, td.want, got)
 		})
 	}
 }
 
-func assertError(t *testing.T, wantErr bool, got error) {
-	t.Helper()
-
-	if wantErr && got == nil {
-		t.Fatal("expected an error, got nil")
-	}
-
-	if !wantErr && got != nil {
-		t.Fatalf("unexpected error: %v", got)
+func simpleJSONResult() map[string]any {
+	return map[string]any{
+		"host":    "hexlet.io",
+		"timeout": 50.0,
+		"proxy":   "123.234.53.22",
+		"follow":  false,
+		"secret":  nil,
 	}
 }
 
-func assertParserValue(t *testing.T, want, got map[string]any) {
-	t.Helper()
-
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("got %v, want %v", got, want)
+func complexJSONResult() map[string]any {
+	return map[string]any{
+		"common": map[string]any{
+			"setting1": "Value 1",
+			"setting2": 200.0,
+			"setting3": true,
+			"setting6": map[string]any{
+				"key": "value",
+				"doge": map[string]any{
+					"wow": "",
+				},
+			},
+		},
+		"group1": map[string]any{
+			"baz": "bas",
+			"foo": "bar",
+			"nest": map[string]any{
+				"key": "value",
+			},
+			"secret": nil,
+		},
+		"group2": map[string]any{
+			"abc": 12345.0,
+			"deep": map[string]any{
+				"id": 45.0,
+			},
+		},
 	}
+}
+
+func simpleYamlResult() map[string]any {
+	return map[string]any{
+		"host":    "hexlet.io",
+		"timeout": 50,
+		"proxy":   "123.234.53.22",
+		"follow":  false,
+		"secret":  nil,
+	}
+}
+
+func complexYamlResult() map[string]any {
+	return map[string]any{
+		"common": map[string]any{
+			"setting1": "Value 1",
+			"setting2": 200,
+			"setting3": true,
+			"setting6": map[string]any{
+				"key": "value",
+				"doge": map[string]any{
+					"wow": "",
+				},
+			},
+		},
+		"group1": map[string]any{
+			"baz": "bas",
+			"foo": "bar",
+			"nest": map[string]any{
+				"key": "value",
+			},
+			"secret": nil,
+		},
+		"group2": map[string]any{
+			"abc": 12345,
+			"deep": map[string]any{
+				"id": 45,
+			},
+		},
+	}
+}
+
+func emptyResult() map[string]any {
+	return map[string]any{}
+}
+
+func ReadFile(filepath string) ([]byte, error) {
+	bytes, err := os.ReadFile(filepath)
+	if err != nil {
+		err = fmt.Errorf("%s %w: %w", filepath, errReadFile, err)
+	}
+	return bytes, err
 }

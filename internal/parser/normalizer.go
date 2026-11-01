@@ -16,6 +16,7 @@ func NormalizeValue(value any) any {
 		for i := range v {
 			v[i] = NormalizeValue(v[i])
 		}
+		return v
 
 	case int:
 		return float64(v)
@@ -26,12 +27,7 @@ func NormalizeValue(value any) any {
 	case uint64:
 		return float64(v)
 
-	case nil:
-		return "null"
-
 	default:
 		return value
 	}
-
-	return value
 }

@@ -1,7 +1,6 @@
 package formatter
 
 import (
-	"encoding/json"
 	"fmt"
 	"maps"
 	"slices"
@@ -47,7 +46,7 @@ func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node
 			"\n%s + %s: %v",
 			getMarkedIndent(indent),
 			node.Key,
-			fs.formatValue(node.NewValue, indent+1),
+			fs.formatValue(node.NewValue(), indent+1),
 		)
 	case analyzer.Deleted:
 		fmt.Fprintf(
@@ -55,7 +54,7 @@ func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node
 			"\n%s - %s: %v",
 			getMarkedIndent(indent),
 			node.Key,
-			fs.formatValue(node.OldValue, indent+1),
+			fs.formatValue(node.OldValue(), indent+1),
 		)
 	case analyzer.Changed:
 		fmt.Fprintf(
@@ -63,50 +62,68 @@ func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node
 			"\n%s - %s: %v",
 			getMarkedIndent(indent),
 			node.Key,
-			fs.formatValue(node.OldValue, indent+1),
+			fs.formatValue(node.OldValue(), indent+1),
 		)
 		fmt.Fprintf(
 			builder,
 			"\n%s + %s: %v",
 			getMarkedIndent(indent),
 			node.Key,
-			fs.formatValue(node.NewValue, indent+1),
+			fs.formatValue(node.NewValue(), indent+1),
 		)
 	case analyzer.Unchanged:
-		fmt.Fprintf(builder, "\n%s%s: %v", getIndent(indent), node.Key, fs.formatValue(node.OldValue, indent+1))
+		fmt.Fprintf(builder, "\n%s%s: %v", getIndent(indent), node.Key, fs.formatValue(node.OldValue(), indent+1))
 	}
 }
 
 func (fs FormatterStylish) formatValue(value any, indent int) any {
-	switch value.(type) {
+	switch v := value.(type) {
 	case map[string]any:
-		return fs.formatNestedValue(value, indent)
+		return fs.formatNestedMap(v, indent)
 	case []any:
-		return fs.formatNestedValue(value, indent)
+		return fs.formatNestedArray(v, indent)
+	case nil:
+		return "null"
 	default:
 		return value
 	}
 }
 
-func (fs FormatterStylish) formatNestedValue(value any, indent int) string {
-	bytes, _ := json.MarshalIndent(value, "", getIndent(1))
+func (fs FormatterStylish) formatNestedMap(value map[string]any, indent int) string {
+	builder := &strings.Builder{}
 
-	strSlice := strings.Split(string(bytes), "\n")
-	for i, row := range strSlice {
-		if i != 0 {
-			strSlice[i] = getIndent(indent-1) + row
-		}
+	fmt.Fprintf(builder, "{")
+
+	for _, key := range getSortedKeys(value) {
+		fmt.Fprintf(builder, "\n%s%s: %v", getIndent(indent), key, fs.formatValue(value[key], indent+1))
 	}
 
-	result := strings.Join(strSlice, "\n")
-	result = strings.Replace(result, "\"", "", len(strSlice)*5)
-	result = strings.Replace(result, ",", "", len(strSlice)*5)
+	fmt.Fprintf(builder, "\n%s}", getIndent(indent-1))
+	return builder.String()
+}
 
-	return result
+func (fs FormatterStylish) formatNestedArray(value []any, indent int) string {
+	builder := &strings.Builder{}
+
+	fmt.Fprintf(builder, "[")
+
+	for _, v := range value {
+		fmt.Fprintf(builder, "\n%s%v", getIndent(indent), fs.formatValue(v, indent+1))
+	}
+
+	fmt.Fprintf(builder, "\n%s]", getIndent(indent-1))
+	return builder.String()
 }
 
 func (fs FormatterStylish) getSortedChildKeys(node *analyzer.DiffNode) []string {
 	keys := slices.Collect(maps.Keys(node.Children))
+	slices.Sort(keys)
+
+	return keys
+}
+
+func getSortedKeys(valueMap map[string]any) []string {
+	keys := slices.Collect(maps.Keys(valueMap))
 	slices.Sort(keys)
 
 	return keys

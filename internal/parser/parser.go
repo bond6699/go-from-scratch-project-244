@@ -9,6 +9,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var (
+	errReadFile            = fmt.Errorf("failed read file")
+	errCreateParserFile    = fmt.Errorf("failed create parser")
+	errUnsupportedFileType = fmt.Errorf("not supported file type")
+	errParse               = fmt.Errorf("failed parse")
+
+	errDecodeJSON = fmt.Errorf("failed to decode JSON")
+	errDecodeYAML = fmt.Errorf("failed to decode YAML")
+)
+
 type Parser interface {
 	Parse([]byte) (map[string]any, error)
 }
@@ -20,7 +30,7 @@ func (jp JSONParser) Parse(bytes []byte) (map[string]any, error) {
 
 	err := json.Unmarshal(bytes, &jsonData)
 	if err != nil {
-		return jsonData, err
+		return jsonData, fmt.Errorf("%w: %w", errDecodeJSON, err)
 	}
 
 	return jsonData, nil
@@ -33,7 +43,7 @@ func (yp YamlParser) Parse(bytes []byte) (map[string]any, error) {
 
 	err := yaml.Unmarshal(bytes, &yamlData)
 	if err != nil {
-		return yamlData, err
+		return yamlData, fmt.Errorf("%w: %w", errDecodeYAML, err)
 	}
 
 	return yamlData, nil
@@ -48,7 +58,7 @@ func NewParser(path string) (Parser, error) {
 		return YamlParser{}, nil
 	}
 
-	return nil, fmt.Errorf("not supported file '%s'", path)
+	return nil, fmt.Errorf("%w %s", errUnsupportedFileType, path)
 }
 
 func Parse(filepath string) (map[string]any, error) {
@@ -56,17 +66,17 @@ func Parse(filepath string) (map[string]any, error) {
 
 	bytes, err := os.ReadFile(filepath)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("%w: %w", errReadFile, err)
 	}
 
 	parser, err := NewParser(filepath)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("%w: %w", errCreateParserFile, err)
 	}
 
 	result, err = parser.Parse(bytes)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("%w: %w", errParse, err)
 	}
 
 	return result, nil

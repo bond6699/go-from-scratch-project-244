@@ -3,99 +3,95 @@ package formatter
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"code/internal/analyzer"
 )
 
 func TestGetFormatter(t *testing.T) {
 	tests := []struct {
-		format string
-		want   Formatter
+		name    string
+		format  string
+		want    Formatter
+		wantErr error
 	}{
 		{
+			"detect stylish formatter",
 			"stylish",
 			FormatterStylish{},
+			nil,
 		},
 		{
+			"detect plain formatter",
 			"plain",
 			FormatterPlain{},
+			nil,
 		},
 		{
+			"detect json formatter",
 			"json",
 			FormatterJSON{},
+			nil,
 		},
 		{
+			"detect error with invalid format",
+			"invalidFormat",
+			nil,
+			errUnsupportedFormat,
+		},
+		{
+			"detect error with empty format",
 			"",
-			FormatterStylish{},
+			nil,
+			errUnsupportedFormat,
 		},
 	}
 
 	for _, td := range tests {
-		t.Run(td.format, func(t *testing.T) {
-			if got := getFormatter(td.format); got != td.want {
-				t.Fatalf("got %T, want %T", got, td.want)
-			}
+		t.Run(td.name, func(t *testing.T) {
+			got, err := getFormatter(td.format)
+			require.Equal(t, td.want, got)
+			require.ErrorIs(t, err, td.wantErr)
 		})
 	}
 }
 
 func TestFormat(t *testing.T) {
 	tests := []struct {
+		name    string
 		format  string
 		diff    analyzer.DiffNode
 		want    string
-		wantErr bool
+		wantErr error
 	}{
 		{
+			"detect correct formatting stylish",
 			"stylish",
-			analyzer.DiffNode{
-				Key:    "root",
-				Status: analyzer.Container,
-				Children: map[string]*analyzer.DiffNode{
-					"timeout": {
-						Key:      "timeout",
-						Status:   analyzer.Changed,
-						OldValue: 50.0,
-						NewValue: 100.0,
-					},
-				},
-			},
+			*ContainerNode("root", map[string]*analyzer.DiffNode{
+				"timeout": ChangedNode("timeout", 50.0, 100.0),
+			}),
 			`{
   - timeout: 50
   + timeout: 100
 }`,
-			false,
+			nil,
 		},
 		{
+			"detect correct formatting stylish",
 			"plain",
-			analyzer.DiffNode{
-				Key:    "root",
-				Status: analyzer.Container,
-				Children: map[string]*analyzer.DiffNode{
-					"timeout": {
-						Key:      "timeout",
-						Status:   analyzer.Changed,
-						OldValue: 50.0,
-						NewValue: 100.0,
-					},
-				},
-			},
+			*ContainerNode("root", map[string]*analyzer.DiffNode{
+				"timeout": ChangedNode("timeout", 50.0, 100.0),
+			}),
 			"Property 'timeout' was updated. From 50 to 100",
-			false,
+			nil,
 		},
 		{
+			"detect correct formatting stylish",
 			"json",
-			analyzer.DiffNode{
-				Key:    "root",
-				Status: analyzer.Container,
-				Children: map[string]*analyzer.DiffNode{
-					"timeout": {
-						Key:      "timeout",
-						Status:   analyzer.Changed,
-						OldValue: 50.0,
-						NewValue: 100.0,
-					},
-				},
-			},
+			*ContainerNode("root", map[string]*analyzer.DiffNode{
+				"timeout": ChangedNode("timeout", 50.0, 100.0),
+			}),
 			`{
    "child": {
       "timeout": {
@@ -108,27 +104,23 @@ func TestFormat(t *testing.T) {
    "key": "root",
    "status": "Container"
 }`,
-			false,
+			nil,
 		},
 		{
+			"detect error errCreateFormatter",
+			"unsupportedFormat",
+			*ContainerNode("root", map[string]*analyzer.DiffNode{}),
 			"",
-			analyzer.DiffNode{
-				Key:    "root",
-				Status: analyzer.Container,
-				Children: map[string]*analyzer.DiffNode{
-					"timeout": {
-						Key:      "timeout",
-						Status:   analyzer.Changed,
-						OldValue: 50.0,
-						NewValue: 100.0,
-					},
-				},
-			},
-			`{
-  - timeout: 50
-  + timeout: 100
-}`,
-			false,
+			errCreateFormatter,
+		},
+		{
+			"detect error errFormatting",
+			"json",
+			*ContainerNode("root", map[string]*analyzer.DiffNode{
+				"func": UnchangedNode("func", any(func() {})),
+			}),
+			"",
+			errFormatting,
 		},
 	}
 
@@ -140,14 +132,39 @@ func TestFormat(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			got, err := Format(td.format, &td.diff)
-
-			if (err != nil) != td.wantErr {
-				t.Fatalf("Format() error = %v, wantErr %v", err, td.wantErr)
-			}
-
-			if got != td.want {
-				t.Errorf("Format() got:\n%q\nwant:\n%q", got, td.want)
-			}
+			assert.Equal(t, td.want, got)
+			require.ErrorIs(t, err, td.wantErr)
 		})
 	}
+}
+
+func ContainerNode(key string, value map[string]*analyzer.DiffNode) *analyzer.DiffNode {
+	node := analyzer.NewDiffNode(key, analyzer.Container)
+	node.Children = value
+	return node
+}
+
+func UnchangedNode(key string, value any) *analyzer.DiffNode {
+	node := analyzer.NewDiffNode(key, analyzer.Unchanged)
+	node.SetOldValue(value)
+	return node
+}
+
+func ChangedNode(key string, oldValue, newValue any) *analyzer.DiffNode {
+	node := analyzer.NewDiffNode(key, analyzer.Changed)
+	node.SetOldValue(oldValue)
+	node.SetNewValue(newValue)
+	return node
+}
+
+func DeletedNode(key string, value any) *analyzer.DiffNode {
+	node := analyzer.NewDiffNode(key, analyzer.Deleted)
+	node.SetOldValue(value)
+	return node
+}
+
+func AddedNode(key string, value any) *analyzer.DiffNode {
+	node := analyzer.NewDiffNode(key, analyzer.Added)
+	node.SetNewValue(value)
+	return node
 }

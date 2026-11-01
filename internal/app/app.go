@@ -28,8 +28,7 @@ func runDiff(ctx context.Context, cmd *cli.Command) error {
 
 	result, err := code.GenDiff(filepath1, filepath2, format)
 	if err != nil {
-		_ = cli.ShowRootCommandHelp(cmd)
-		return err
+		return fmt.Errorf("failed to execute Gendiff: %w", err)
 	}
 
 	fmt.Println(result)
@@ -37,15 +36,15 @@ func runDiff(ctx context.Context, cmd *cli.Command) error {
 	return nil
 }
 
-func validatePath(path string) bool {
+func validatePath(path string) error {
 	path = strings.TrimSpace(path)
 	if !strings.HasSuffix(path, ".json") && !strings.HasSuffix(path, ".yml") && !strings.HasSuffix(path, ".yaml") {
-		return false
+		return nil
 	}
 
 	_, err := os.Stat(path)
 
-	return err == nil
+	return err
 }
 
 func New() *cli.Command {
@@ -71,9 +70,8 @@ func New() *cli.Command {
 			}
 
 			for _, path := range cmd.Args().Slice() {
-				if !validatePath(path) {
-					_ = cli.ShowRootCommandHelp(cmd)
-					return fmt.Errorf("incorrect file path, got %s", path)
+				if err := validatePath(path); err != nil {
+					return fmt.Errorf("failed to validate path %q : %w", path, err)
 				}
 			}
 
@@ -94,8 +92,7 @@ func New() *cli.Command {
 			case "stylish", "plain", "json":
 				return ctx, nil
 			default:
-				_ = cli.ShowRootCommandHelp(cmd)
-				return ctx, fmt.Errorf("format %q is not supported", format)
+				return ctx, fmt.Errorf("format %q is not supported; select one of the possible options (stylish, plain, json)", format)
 			}
 		},
 		Action: runDiff,

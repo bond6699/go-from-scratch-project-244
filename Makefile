@@ -1,4 +1,4 @@
-.PHONY: run build
+.PHONY: run build lint lint-fix test test-with-cover
 
 run:
 	go run cmd/gendiff/main.go $(ARGS)

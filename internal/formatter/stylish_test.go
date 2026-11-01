@@ -3,6 +3,9 @@ package formatter
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"code/internal/analyzer"
 )
 
@@ -13,8 +16,8 @@ func TestStylishFormat(t *testing.T) {
 		want  string
 	}{
 		{
-			"simple values",
-			simpleDiffInput(),
+			"detect correct STYLISH result with simple values",
+			simpleDiff,
 			`{
   - follow: false
   + follow: true
@@ -27,8 +30,8 @@ func TestStylishFormat(t *testing.T) {
 }`,
 		},
 		{
-			"value with arrays",
-			withArrayDiffInput(),
+			"detect correct STYLISH result with array values",
+			diffWithArrays,
 			`{
     languages: [
         GO
@@ -58,8 +61,18 @@ func TestStylishFormat(t *testing.T) {
 }`,
 		},
 		{
-			"complex value",
-			complexDiffInput(),
+			"detect saved nil value in STYLISH result",
+			diffWithNil,
+			`{
+  - toNullValue: null
+  + toNullValue: null
+  - toStringValue: null
+  + toStringValue: null
+}`,
+		},
+		{
+			"detect correct STYLISH result with complex values",
+			complexDiff,
 			`{
     common: {
       - setting1: Value 1
@@ -79,6 +92,7 @@ func TestStylishFormat(t *testing.T) {
             key: value
         }
       + secret: null
+      + secret2: null
     }
   + group2: {
         abc: 12345
@@ -89,12 +103,8 @@ func TestStylishFormat(t *testing.T) {
 }`,
 		},
 		{
-			"empty value",
-			analyzer.DiffNode{
-				Key:      "root",
-				Status:   analyzer.Container,
-				Children: map[string]*analyzer.DiffNode{},
-			},
+			"detect correct STYLISH result with empty value",
+			emptyDiff,
 			`{
 }`,
 		},
@@ -103,13 +113,8 @@ func TestStylishFormat(t *testing.T) {
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
 			got, err := FormatterStylish{}.Format(&td.input)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			if got != td.want {
-				t.Errorf("got:\n%s\nwant:\n%s", got, td.want)
-			}
+			assert.Equal(t, td.want, got)
+			require.ErrorIs(t, err, nil)
 		})
 	}
 }

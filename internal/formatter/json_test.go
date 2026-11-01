@@ -3,54 +3,22 @@ package formatter
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"code/internal/analyzer"
 )
 
 func TestJSONFormat(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   analyzer.DiffNode
+		diff    analyzer.DiffNode
 		want    string
-		wantErr bool
+		wantErr error
 	}{
 		{
-			"simple values",
-			analyzer.DiffNode{
-				Key:    "root",
-				Status: analyzer.Container,
-				Children: map[string]*analyzer.DiffNode{
-					"follow": {
-						Key:      "follow",
-						Status:   analyzer.Changed,
-						OldValue: false,
-						NewValue: true,
-					},
-					"host": {
-						Key:      "host",
-						Status:   analyzer.Unchanged,
-						OldValue: "hexlet.io",
-						NewValue: nil,
-					},
-					"proxy": {
-						Key:      "proxy",
-						Status:   analyzer.Changed,
-						OldValue: "123.234.53.22",
-						NewValue: "123.235.53.22",
-					},
-					"secret": {
-						Key:      "secret",
-						Status:   analyzer.Unchanged,
-						OldValue: "null",
-						NewValue: nil,
-					},
-					"timeout": {
-						Key:      "timeout",
-						Status:   analyzer.Changed,
-						OldValue: 50.0,
-						NewValue: 100.0,
-					},
-				},
-			},
+			"detect correct JSON result with simple values",
+			simpleDiff,
 			`{
    "child": {
       "follow": {
@@ -85,34 +53,11 @@ func TestJSONFormat(t *testing.T) {
    "key": "root",
    "status": "Container"
 }`,
-			false,
+			nil,
 		},
 		{
-			"value with arrays",
-			analyzer.DiffNode{
-				Key:    "root",
-				Status: analyzer.Container,
-				Children: map[string]*analyzer.DiffNode{
-					"languages": {
-						Key:      "languages",
-						Status:   analyzer.Unchanged,
-						OldValue: []any{"GO", "RUST", "PYTHON"},
-						NewValue: nil,
-					},
-					"numbers": {
-						Key:      "numbers",
-						Status:   analyzer.Changed,
-						OldValue: []any{1.0, 6.0, 9.0},
-						NewValue: []any{1.0, 6.0, 9.0, 22.6},
-					},
-					"others": {
-						Key:      "others",
-						Status:   analyzer.Changed,
-						OldValue: []any{"hello", "world", "null"},
-						NewValue: []any{"hello", "world"},
-					},
-				},
-			},
+			"detect correct JSON result with array values",
+			diffWithArrays,
 			`{
    "child": {
       "languages": {
@@ -156,104 +101,34 @@ func TestJSONFormat(t *testing.T) {
    "key": "root",
    "status": "Container"
 }`,
-			false,
+			nil,
 		},
 		{
-			"complex value",
-			analyzer.DiffNode{
-				Key:    "root",
-				Status: analyzer.Container,
-				Children: map[string]*analyzer.DiffNode{
-					"common": {
-						Key:    "common",
-						Status: analyzer.Container,
-						Children: map[string]*analyzer.DiffNode{
-							"setting1": {
-								Key:      "setting1",
-								Status:   analyzer.Deleted,
-								OldValue: "Value 1",
-								NewValue: nil,
-							},
-							"setting2": {
-								Key:      "setting2",
-								Status:   analyzer.Unchanged,
-								OldValue: 200.0,
-								NewValue: nil,
-							},
-							"setting3": {
-								Key:      "setting3",
-								Status:   analyzer.Unchanged,
-								OldValue: true,
-								NewValue: nil,
-							},
-							"setting6": {
-								Key:    "setting6",
-								Status: analyzer.Container,
-								Children: map[string]*analyzer.DiffNode{
-									"doge": {
-										Key:    "doge",
-										Status: analyzer.Container,
-										Children: map[string]*analyzer.DiffNode{
-											"wow": {
-												Key:      "wow",
-												Status:   analyzer.Unchanged,
-												OldValue: "",
-												NewValue: nil,
-											},
-										},
-									},
-									"key": {
-										Key:      "key",
-										Status:   analyzer.Unchanged,
-										OldValue: "value",
-										NewValue: nil,
-									},
-								},
-							},
-						},
-					},
-					"group1": {
-						Key:    "group1",
-						Status: analyzer.Container,
-						Children: map[string]*analyzer.DiffNode{
-							"baz": {
-								Key:      "baz",
-								Status:   analyzer.Unchanged,
-								OldValue: "bas",
-								NewValue: nil,
-							},
-							"foo": {
-								Key:      "foo",
-								Status:   analyzer.Unchanged,
-								OldValue: "bar",
-								NewValue: nil,
-							},
-							"nest": {
-								Key:    "nest",
-								Status: analyzer.Added,
-								NewValue: map[string]any{
-									"key": "value",
-								},
-							},
-							"secret": {
-								Key:      "secret",
-								Status:   analyzer.Added,
-								NewValue: "null",
-							},
-						},
-					},
-					"group2": {
-						Key:    "group2",
-						Status: analyzer.Added,
-						NewValue: map[string]any{
-							"abc": 12345.0,
-							"deep": map[string]any{
-								"id": 45.0,
-							},
-						},
-					},
-				},
-			},
+			"detect saved nil value in JSON result",
+			diffWithNil,
+			`{
+   "child": {
+      "toNullValue": {
+         "old": "null",
+         "new": null,
+         "key": "toNullValue",
+         "status": "Changed"
+      },
+      "toStringValue": {
+         "old": null,
+         "new": "null",
+         "key": "toStringValue",
+         "status": "Changed"
+      }
+   },
+   "key": "root",
+   "status": "Container"
+}`,
+			nil,
+		},
+		{
+			"detect correct JSON result with complex values",
+			complexDiff,
 			`{
    "child": {
       "common": {
@@ -322,6 +197,11 @@ func TestJSONFormat(t *testing.T) {
                "new": "null",
                "key": "secret",
                "status": "Added"
+            },
+            "secret2": {
+               "new": null,
+               "key": "secret2",
+               "status": "Added"
             }
          },
          "key": "group1",
@@ -341,60 +221,32 @@ func TestJSONFormat(t *testing.T) {
    "key": "root",
    "status": "Container"
 }`,
-			false,
+			nil,
 		},
 		{
-			"empty value",
-			analyzer.DiffNode{
-				Key:      "root",
-				Status:   analyzer.Container,
-				Children: map[string]*analyzer.DiffNode{},
-			},
+			"detect correct JSON result with empty value",
+			emptyDiff,
 			`{
    "key": "root",
    "status": "Container"
 }`,
-			false,
+			nil,
 		},
 		{
-			"incorrect value",
-			analyzer.DiffNode{
-				Key:    "root",
-				Status: analyzer.Container,
-				Children: map[string]*analyzer.DiffNode{
-					"follow": {
-						Key:      "follow",
-						Status:   analyzer.Changed,
-						OldValue: false,
-						NewValue: func() {},
-					},
-				},
-			},
+			"detect errFormatToJSON with incorrect value",
+			*ContainerNode("root", map[string]*analyzer.DiffNode{
+				"follow": UnchangedNode("follow", any(func() {})),
+			}),
 			"",
-			true,
+			errFormatToJSON,
 		},
 	}
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			got, err := FormatterJSON{}.Format(&td.input)
-			assertError(t, td.wantErr, err)
-
-			if got != td.want {
-				t.Errorf("got:\n%s\nwant:\n%s", got, td.want)
-			}
+			got, err := FormatterJSON{}.Format(&td.diff)
+			assert.Equal(t, td.want, got)
+			require.ErrorIs(t, err, td.wantErr)
 		})
-	}
-}
-
-func assertError(t *testing.T, wantErr bool, got error) {
-	t.Helper()
-
-	if wantErr && got == nil {
-		t.Fatal("expected an error, got nil")
-	}
-
-	if !wantErr && got != nil {
-		t.Fatalf("unexpected error: %v", got)
 	}
 }

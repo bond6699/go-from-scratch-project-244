@@ -16,24 +16,38 @@ var (
 )
 
 type DiffNode struct {
-	OldValue any                  `json:"old,omitempty"`
-	NewValue any                  `json:"new,omitempty"`
+	OldV     *any                 `json:"old,omitempty"`
+	NewV     *any                 `json:"new,omitempty"`
 	Children map[string]*DiffNode `json:"child,omitempty"`
 	Key      string               `json:"key,omitempty"`
 	Status   DiffStatus           `json:"status,omitempty"`
 }
 
-func NewDiffNode(key string, status DiffStatus, oldValue, newValue any) *DiffNode {
+func NewDiffNode(key string, status DiffStatus) *DiffNode {
 	return &DiffNode{
-		Key:      key,
-		Status:   status,
-		OldValue: oldValue,
-		NewValue: newValue,
+		Key:    key,
+		Status: status,
 	}
 }
 
+func (node *DiffNode) SetOldValue(oldValue any) {
+	node.OldV = &oldValue
+}
+
+func (node *DiffNode) SetNewValue(newValue any) {
+	node.NewV = &newValue
+}
+
+func (node *DiffNode) OldValue() any {
+	return *node.OldV
+}
+
+func (node *DiffNode) NewValue() any {
+	return *node.NewV
+}
+
 func Analyze(data1, data2 map[string]any) *DiffNode {
-	root := NewDiffNode("root", Container, nil, nil)
+	root := NewDiffNode("root", Container)
 	root.Children = map[string]*DiffNode{}
 
 	keys := getSortedKeysUnion(data1, data2)
@@ -50,11 +64,15 @@ func Analyze(data1, data2 map[string]any) *DiffNode {
 
 func AnalyzeValue(key string, oldValue any, oldExist bool, newValue any, newExist bool) *DiffNode {
 	if !oldExist {
-		return NewDiffNode(key, Added, nil, newValue)
+		node := NewDiffNode(key, Added)
+		node.SetNewValue(newValue)
+		return node
 	}
 
 	if !newExist {
-		return NewDiffNode(key, Deleted, oldValue, nil)
+		node := NewDiffNode(key, Deleted)
+		node.SetOldValue(oldValue)
+		return node
 	}
 
 	oldMap, oldIsMap := oldValue.(map[string]any)
@@ -72,17 +90,27 @@ func AnalyzeValue(key string, oldValue any, oldExist bool, newValue any, newExis
 
 	if oldIsArray && newIsArray {
 		if reflect.DeepEqual(oldArray, newArray) {
-			return NewDiffNode(key, Unchanged, oldArray, nil)
+			node := NewDiffNode(key, Unchanged)
+			node.SetOldValue(oldArray)
+			return node
 		}
 
-		return NewDiffNode(key, Changed, oldArray, newArray)
+		node := NewDiffNode(key, Changed)
+		node.SetOldValue(oldArray)
+		node.SetNewValue(newArray)
+		return node
 	}
 
 	if oldValue == newValue {
-		return NewDiffNode(key, Unchanged, oldValue, nil)
+		node := NewDiffNode(key, Unchanged)
+		node.SetOldValue(oldValue)
+		return node
 	}
 
-	return NewDiffNode(key, Changed, oldValue, newValue)
+	node := NewDiffNode(key, Changed)
+	node.SetOldValue(oldValue)
+	node.SetNewValue(newValue)
+	return node
 }
 
 func getSortedKeysUnion(data1, data2 map[string]any) []string {
