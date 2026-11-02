@@ -3,12 +3,21 @@ package app
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	"code"
 
 	"github.com/urfave/cli/v3"
+)
+
+var (
+	errInvalidArguments  = fmt.Errorf("expected exactly 2 file paths")
+	errValidatePath      = fmt.Errorf("failed to validate path")
+	errUnsupportedFormat = fmt.Errorf(
+		"format is not supported; select one of the possible options (stylish, plain, json)",
+	)
 )
 
 func getArgs(cmd *cli.Command) (filepath1, filepath2, format string) {
@@ -31,7 +40,10 @@ func runDiff(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to execute Gendiff: %w", err)
 	}
 
-	fmt.Println(result)
+	_, err = io.WriteString(cmd.Writer, result)
+	if err != nil {
+		return fmt.Errorf("failed to write diff: %w", err)
+	}
 
 	return nil
 }
@@ -39,7 +51,7 @@ func runDiff(ctx context.Context, cmd *cli.Command) error {
 func validatePath(path string) error {
 	path = strings.TrimSpace(path)
 	if !strings.HasSuffix(path, ".json") && !strings.HasSuffix(path, ".yml") && !strings.HasSuffix(path, ".yaml") {
-		return nil
+		return fmt.Errorf("unsupported format")
 	}
 
 	_, err := os.Stat(path)
@@ -64,14 +76,16 @@ func New() *cli.Command {
 		},
 
 		ArgValidator: func(_ context.Context, cmd *cli.Command) error {
-			if cmd.Args().Len() != 2 {
+			args := cmd.Args().Slice()
+
+			if len(args) != 2 {
 				_ = cli.ShowRootCommandHelp(cmd)
-				return fmt.Errorf("expected exactly 2 file paths, got %d", cmd.Args().Len())
+				return fmt.Errorf("%w, got %d", errInvalidArguments, cmd.Args().Len())
 			}
 
 			for _, path := range cmd.Args().Slice() {
 				if err := validatePath(path); err != nil {
-					return fmt.Errorf("failed to validate path %q : %w", path, err)
+					return fmt.Errorf("%w %q : %w args: %v", errValidatePath, path, err, args)
 				}
 			}
 
@@ -92,10 +106,7 @@ func New() *cli.Command {
 			case "stylish", "plain", "json":
 				return ctx, nil
 			default:
-				return ctx, fmt.Errorf(
-					"format %q is not supported; select one of the possible options (stylish, plain, json)",
-					format,
-				)
+				return ctx, fmt.Errorf("%q %w", format, errUnsupportedFormat)
 			}
 		},
 		Action: runDiff,

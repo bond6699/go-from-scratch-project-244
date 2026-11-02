@@ -8,15 +8,21 @@ import (
 	"code/internal/parser"
 )
 
+var (
+	errFailedProcessFirstFile  = fmt.Errorf("failed to process first file")
+	errFailedProcessSecondFile = fmt.Errorf("failed to process second file")
+	errFailedFormat            = fmt.Errorf("failed to format")
+)
+
 func GenDiff(filepath1, filepath2, format string) (string, error) {
 	data1, err := parser.Parse(filepath1)
 	if err != nil {
-		return "", fmt.Errorf("failed to process first file %q: %w", filepath1, err)
+		return "", fmt.Errorf("%w %q: %w", errFailedProcessFirstFile, filepath1, err)
 	}
 
 	data2, err := parser.Parse(filepath2)
 	if err != nil {
-		return "", fmt.Errorf("failed to process second file %q: %w", filepath2, err)
+		return "", fmt.Errorf("%w %q: %w", errFailedProcessSecondFile, filepath2, err)
 	}
 
 	data1 = parser.Normalize(data1)
@@ -25,7 +31,7 @@ func GenDiff(filepath1, filepath2, format string) (string, error) {
 
 	result, err := formatter.Format(format, diff)
 	if err != nil {
-		return "", fmt.Errorf("failed to format %q, %q in %q: %w", filepath1, filepath2, format, err)
+		return "", fmt.Errorf("%w %q, %q in %q: %w", errFailedFormat, filepath1, filepath2, format, err)
 	}
 
 	return result, nil

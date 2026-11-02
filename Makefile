@@ -1,4 +1,4 @@
-.PHONY: run build lint lint-fix test test-with-cover
+.PHONY: run build lint lint-fix test test-with-cover pre-commit
 
 run:
 	go run cmd/gendiff/main.go $(ARGS)
@@ -12,3 +12,8 @@ test:
 	go test -cover -v ./...
 test-with-cover:
 	go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out
+
+pre-commit:
+	make lint-fix
+	make test-with-cover
+	
