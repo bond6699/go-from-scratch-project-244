@@ -103,6 +103,14 @@ func TestStylishFormat(t *testing.T) {
 }`,
 		},
 		{
+			"detect correct STYLISH result with value contains punctuation marks",
+			diffWithValueContainsPunctuationMarks,
+			`{
+  - docsIndex: 124/365-44, 124/365-45
+  + docsIndex: 124/365-45, 124/365-46
+}`,
+		},
+		{
 			"detect correct STYLISH result with empty value",
 			emptyDiff,
 			`{

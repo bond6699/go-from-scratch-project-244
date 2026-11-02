@@ -224,6 +224,23 @@ func TestJSONFormat(t *testing.T) {
 			nil,
 		},
 		{
+			"detect correct JSON result with value contains punctuation marks",
+			diffWithValueContainsPunctuationMarks,
+			`{
+   "child": {
+      "docsIndex": {
+         "old": "124/365-44, 124/365-45",
+         "new": "124/365-45, 124/365-46",
+         "key": "docsIndex",
+         "status": "Changed"
+      }
+   },
+   "key": "root",
+   "status": "Container"
+}`,
+			nil,
+		},
+		{
 			"detect correct JSON result with empty value",
 			emptyDiff,
 			`{

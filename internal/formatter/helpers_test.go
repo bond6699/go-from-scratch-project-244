@@ -51,5 +51,9 @@ var (
 		}),
 	})
 
+	diffWithValueContainsPunctuationMarks = *ContainerNode("root", map[string]*analyzer.DiffNode{
+		"docsIndex": ChangedNode("docsIndex", "124/365-44, 124/365-45", "124/365-45, 124/365-46"),
+	})
+
 	emptyDiff = *ContainerNode("root", map[string]*analyzer.DiffNode{})
 )

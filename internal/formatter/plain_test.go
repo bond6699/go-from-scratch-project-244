@@ -44,6 +44,11 @@ Property 'group1.secret2' was added with value: null
 Property 'group2' was added with value: [complex value]`,
 		},
 		{
+			"detect correct PLAIN result with value contains punctuation marks",
+			diffWithValueContainsPunctuationMarks,
+			"Property 'docsIndex' was updated. From '124/365-44, 124/365-45' to '124/365-45, 124/365-46'",
+		},
+		{
 			"detect correct PLAIN result with empty value",
 			emptyDiff,
 			"",
