@@ -8,12 +8,12 @@ var (
 		"host":    UnchangedNode("host", "hexlet.io"),
 		"proxy":   ChangedNode("proxy", "123.234.53.22", "123.235.53.22"),
 		"secret":  UnchangedNode("secret", "null"),
-		"timeout": ChangedNode("timeout", 50.0, 100.0),
+		"timeout": ChangedNode("timeout", int64(50), int64(100)),
 	})
 
 	diffWithArrays = *ContainerNode("root", map[string]*analyzer.DiffNode{
 		"languages": UnchangedNode("languages", []any{"GO", "RUST", "PYTHON"}),
-		"numbers":   ChangedNode("numbers", []any{1.0, 6.0, 9.0}, []any{1.0, 6.0, 9.0, 22.6}),
+		"numbers":   ChangedNode("numbers", []any{int64(1), int64(6), int64(9)}, []any{int64(1), int64(6), int64(9), 22.6}),
 		"others":    ChangedNode("others", []any{"hello", "world", "null"}, []any{"hello", "world"}),
 	})
 
@@ -25,7 +25,7 @@ var (
 	complexDiff = *ContainerNode("root", map[string]*analyzer.DiffNode{
 		"common": ContainerNode("common", map[string]*analyzer.DiffNode{
 			"setting1": DeletedNode("setting1", "Value 1"),
-			"setting2": UnchangedNode("setting2", 200.0),
+			"setting2": UnchangedNode("setting2", int64(200)),
 			"setting3": UnchangedNode("setting3", true),
 			"setting6": ContainerNode("setting6", map[string]*analyzer.DiffNode{
 				"key": UnchangedNode("key", "value"),
@@ -44,9 +44,9 @@ var (
 			"secret2": AddedNode("secret2", nil),
 		}),
 		"group2": AddedNode("group2", map[string]any{
-			"abc": 12345.0,
+			"abc": int64(12345),
 			"deep": map[string]any{
-				"id": 45.0,
+				"id": int64(45),
 			},
 		}),
 	})

@@ -57,7 +57,7 @@ gendiff [options] <filepath1> <filepath2>
 Сравните два файла:
 
 ```bash
-./bin/gendiff file1.json file2.json
+./bin/gendiff testdata/file1.json testdata/file2.json
 ```
 
 По умолчанию используется формат `stylish`.
@@ -67,44 +67,126 @@ gendiff [options] <filepath1> <filepath2>
 **Stylish**
 
 ```bash
-./bin/gendiff file1.json file2.json
+./bin/gendiff testdata/file1.json testdata/file2.json
 ```
 
 Пример вывода:
 
 ```text
 {
-  - follow: false
+    additional: {
+        one: 1
+      - three: [
+            1, 2, 4
+            2
+            hello from, GO
+        ]
+      + three: [
+            1, 2
+            2
+            hello from, GO
+        ]
+        two: 2
+    }
+    follow: false
     host: hexlet.io
-  + proxy: 123.234.53.22
+    proxy: 123.234.53.22
+  - secret: null
+  + secret: null
+    timeout: 50
 }
 ```
 
 **Plain**
 
 ```bash
-./bin/gendiff --format plain file1.json file2.json
+./bin/gendiff --format plain testdata/file1.json testdata/file2.json
 ```
 
 Пример вывода:
 
 ```text
-Property 'follow' was removed
-Property 'proxy' was added with value: '123.234.53.22'
+Property 'additional.three' was updated. From [1, 2, 4 2 hello from, GO] to [1, 2 2 hello from, GO]
+Property 'secret' was updated. From null to 'null'
 ```
 
 **JSON**
 
 ```bash
-./bin/gendiff --format json file1.json file2.json
+./bin/gendiff --format json testdata/file1.json testdata/file2.json
 ```
 
-Формат `json` выводит результат сравнения в виде структурированного JSON.
+Пример вывода:
+
+```json
+{
+   "child": {
+      "additional": {
+         "child": {
+            "one": {
+               "old": 1,
+               "key": "one",
+               "status": "Unchanged"
+            },
+            "three": {
+               "old": [
+                  "1, 2, 4",
+                  2,
+                  "hello from, GO"
+               ],
+               "new": [
+                  "1, 2",
+                  2,
+                  "hello from, GO"
+               ],
+               "key": "three",
+               "status": "Changed"
+            },
+            "two": {
+               "old": 2,
+               "key": "two",
+               "status": "Unchanged"
+            }
+         },
+         "key": "additional",
+         "status": "Container"
+      },
+      "follow": {
+         "old": false,
+         "key": "follow",
+         "status": "Unchanged"
+      },
+      "host": {
+         "old": "hexlet.io",
+         "key": "host",
+         "status": "Unchanged"
+      },
+      "proxy": {
+         "old": "123.234.53.22",
+         "key": "proxy",
+         "status": "Unchanged"
+      },
+      "secret": {
+         "old": null,
+         "new": "null",
+         "key": "secret",
+         "status": "Changed"
+      },
+      "timeout": {
+         "old": 50,
+         "key": "timeout",
+         "status": "Unchanged"
+      }
+   },
+   "key": "root",
+   "status": "Container"
+}
+```
 
 Для выбора формата также доступен короткий флаг `-f`:
 
 ```bash
-./bin/gendiff -f plain file1.json file2.json
+./bin/gendiff -f plain testdata/file1.json testdata/file2.json
 ```
 
 ### Запуск через Make
@@ -112,13 +194,13 @@ Property 'proxy' was added with value: '123.234.53.22'
 Для запуска без предварительной сборки используйте `make run`:
 
 ```bash
-make run ARGS="file1.json file2.json"
+make run ARGS="testdata/file1.json testdata/file2.json"
 ```
 
 С указанием формата:
 
 ```bash
-make run ARGS="-f plain file1.json file2.json"
+make run ARGS="-f plain testdata/file1.json testdata/file2.json"
 ```
 
 ## Разработка
@@ -168,7 +250,7 @@ make build
 │   ├── app/           # Настройка CLI
 │   ├── formatter/     # Форматирование результата
 │   └── parser/        # Чтение и нормализация файлов
-├── GenDiff.go         # Публичная функция GenDiff
+├── gendiff.go         # Публичная функция GenDiff
 ├── Makefile           # Команды разработки
 ├── go.mod
 └── README.md

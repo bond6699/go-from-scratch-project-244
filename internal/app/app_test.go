@@ -29,7 +29,7 @@ func TestApp(t *testing.T) {
     proxy: 123.234.53.22
     secret: null
     timeout: 50
-}`,
+}` + "\n",
 			nil,
 		},
 		{
@@ -45,7 +45,7 @@ func TestApp(t *testing.T) {
     proxy: 123.234.53.22
     secret: null
     timeout: 50
-}`,
+}` + "\n",
 			nil,
 		},
 		{
@@ -99,7 +99,7 @@ func TestApp(t *testing.T) {
    },
    "key": "root",
    "status": "Container"
-}`,
+}` + "\n",
 			nil,
 		},
 		{

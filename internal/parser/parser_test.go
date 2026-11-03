@@ -123,9 +123,9 @@ func TestNormalize(t *testing.T) {
 				"dataFloat":  334.32,
 			},
 			map[string]any{
-				"dataInt":    234.0,
-				"dataInt64":  100.0,
-				"dataUint64": 233.0,
+				"dataInt":    int64(234),
+				"dataInt64":  int64(100),
+				"dataUint64": int64(233),
 				"dataFloat":  334.32,
 			},
 		},
@@ -136,7 +136,7 @@ func TestNormalize(t *testing.T) {
 				"others":  []any{"hello", "world", nil},
 			},
 			map[string]any{
-				"numbers": []any{1.0, 6.0, 9.0, 22.6},
+				"numbers": []any{int64(1), int64(6), int64(9), 22.6},
 				"others":  []any{"hello", "world", nil},
 			},
 		},
@@ -181,7 +181,7 @@ func TestNormalize(t *testing.T) {
 			map[string]any{
 				"common": map[string]any{
 					"setting1": "Value 1",
-					"setting2": 200.0,
+					"setting2": int64(200),
 					"setting3": true,
 					"setting6": map[string]any{
 						"key": "value",
@@ -199,11 +199,40 @@ func TestNormalize(t *testing.T) {
 					"secret": nil,
 				},
 				"group2": map[string]any{
-					"abc": 12345.0,
+					"abc": int64(12345),
 					"deep": map[string]any{
-						"id": 45.0,
+						"id": int64(45),
 					},
 				},
+			},
+		},
+		{
+			"Normalize float64 whole numbers to int64",
+			map[string]any{
+				"fromJSON": float64(50),
+			},
+			map[string]any{
+				"fromJSON": int64(50),
+			},
+		},
+		{
+			"Normalize large int64 preserves precision",
+			map[string]any{
+				"big1": int64(9007199254740993),
+				"big2": int64(9007199254740994),
+			},
+			map[string]any{
+				"big1": int64(9007199254740993),
+				"big2": int64(9007199254740994),
+			},
+		},
+		{
+			"Normalize uint64 above MaxInt64 stays uint64",
+			map[string]any{
+				"huge": uint64(18446744073709551615),
+			},
+			map[string]any{
+				"huge": uint64(18446744073709551615),
 			},
 		},
 	}
@@ -212,6 +241,26 @@ func TestNormalize(t *testing.T) {
 		t.Run(td.name, func(t *testing.T) {
 			require.Equal(t, td.want, Normalize(td.input))
 		})
+	}
+}
+
+func TestNormalizeValue_LargeNumbersNotCollapsed(t *testing.T) {
+	// 2^53 = 9007199254740992 — the boundary of float64's exact integer range.
+	// Two consecutive integers beyond this boundary must remain distinct
+	// after normalization.
+	a := int64(9007199254740993) // 2^53 + 1
+	b := int64(9007199254740994) // 2^53 + 2
+
+	na := NormalizeValue(a)
+	nb := NormalizeValue(b)
+
+	if na == nb {
+		t.Errorf("distinct large integers collapsed to the same value: %v", na)
+	}
+
+	// Also verify the type is preserved as int64.
+	if _, ok := na.(int64); !ok {
+		t.Errorf("expected int64, got %T", na)
 	}
 }
 

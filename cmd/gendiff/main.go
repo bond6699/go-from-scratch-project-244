@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"os"
 
 	"code/internal/app"
@@ -12,13 +11,8 @@ import (
 func main() {
 	cliApp := app.New()
 
-	err := cliApp.Run(context.Background(), os.Args)
-	if err != nil {
-		logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
-
-		fmt.Println()
-		logger.Error("gendiff failed", "error", err)
-
+	if err := cliApp.Run(context.Background(), os.Args); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}
 }

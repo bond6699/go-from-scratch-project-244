@@ -1,6 +1,7 @@
 package formatter
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -266,4 +267,65 @@ func TestJSONFormat(t *testing.T) {
 			require.ErrorIs(t, err, td.wantErr)
 		})
 	}
+}
+
+func TestJSONFormat_SemanticStructure(t *testing.T) {
+	t.Run("semantic check of null vs string null and omitted keys", func(t *testing.T) {
+		got, err := FormatterJSON{}.Format(&diffWithNil)
+		require.NoError(t, err)
+
+		var parsed map[string]any
+
+		err = json.Unmarshal([]byte(got), &parsed)
+		require.NoError(t, err)
+
+		children, ok := parsed["child"].(map[string]any)
+		require.True(t, ok)
+
+		toNull, ok := children["toNullValue"].(map[string]any)
+		require.True(t, ok)
+		assert.Equal(t, "Changed", toNull["status"])
+		assert.Equal(t, "null", toNull["old"])
+		assert.Nil(t, toNull["new"])
+		_, hasNew := toNull["new"]
+		assert.True(t, hasNew, "new key must be present with null value")
+
+		toString, ok := children["toStringValue"].(map[string]any)
+		require.True(t, ok)
+		assert.Equal(t, "Changed", toString["status"])
+		assert.Nil(t, toString["old"])
+		_, hasOld := toString["old"]
+		assert.True(t, hasOld, "old key must be present with null value")
+		assert.Equal(t, "null", toString["new"])
+	})
+
+	t.Run("semantic check of complex diff and deleted/added keys omission", func(t *testing.T) {
+		got, err := FormatterJSON{}.Format(&complexDiff)
+		require.NoError(t, err)
+
+		var parsed map[string]any
+
+		err = json.Unmarshal([]byte(got), &parsed)
+		require.NoError(t, err)
+
+		children := parsed["child"].(map[string]any)
+		common := children["common"].(map[string]any)["child"].(map[string]any)
+
+		// Deleted node: old must exist, new must be omitted
+		setting1 := common["setting1"].(map[string]any)
+		assert.Equal(t, "Deleted", setting1["status"])
+		assert.Equal(t, "Value 1", setting1["old"])
+		_, hasNew := setting1["new"]
+		assert.False(t, hasNew, "new key must be omitted for Deleted node")
+
+		// Added node with null: secret2
+		group1 := children["group1"].(map[string]any)["child"].(map[string]any)
+		secret2 := group1["secret2"].(map[string]any)
+		assert.Equal(t, "Added", secret2["status"])
+		_, hasOld := secret2["old"]
+		assert.False(t, hasOld, "old key must be omitted for Added node")
+		assert.Nil(t, secret2["new"])
+		_, hasNewSecret2 := secret2["new"]
+		assert.True(t, hasNewSecret2, "new key must be present with null value")
+	})
 }

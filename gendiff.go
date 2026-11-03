@@ -15,6 +15,10 @@ var (
 )
 
 func GenDiff(filepath1, filepath2, format string) (string, error) {
+	if format == "" {
+		format = "stylish"
+	}
+
 	data1, err := parser.Parse(filepath1)
 	if err != nil {
 		return "", fmt.Errorf("%w %q: %w", errFailedProcessFirstFile, filepath1, err)

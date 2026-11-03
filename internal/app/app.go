@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -40,9 +39,11 @@ func runDiff(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to execute Gendiff: %w", err)
 	}
 
-	_, err = io.WriteString(cmd.Writer, result)
-	if err != nil {
-		return fmt.Errorf("failed to write diff: %w", err)
+	if result != "" {
+		_, err = fmt.Fprintln(cmd.Writer, result)
+		if err != nil {
+			return fmt.Errorf("failed to write diff: %w", err)
+		}
 	}
 
 	return nil
@@ -50,13 +51,21 @@ func runDiff(ctx context.Context, cmd *cli.Command) error {
 
 func validatePath(path string) error {
 	path = strings.TrimSpace(path)
+
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+
+	if info.IsDir() {
+		return fmt.Errorf("path is a directory: %s", path)
+	}
+
 	if !strings.HasSuffix(path, ".json") && !strings.HasSuffix(path, ".yml") && !strings.HasSuffix(path, ".yaml") {
 		return fmt.Errorf("unsupported format")
 	}
 
-	_, err := os.Stat(path)
-
-	return err
+	return nil
 }
 
 func New() *cli.Command {
@@ -83,9 +92,9 @@ func New() *cli.Command {
 				return fmt.Errorf("%w, got %d", errInvalidArguments, cmd.Args().Len())
 			}
 
-			for _, path := range cmd.Args().Slice() {
+			for _, path := range args {
 				if err := validatePath(path); err != nil {
-					return fmt.Errorf("%w %q : %w args: %v", errValidatePath, path, err, args)
+					return fmt.Errorf("%w %q: %w", errValidatePath, path, err)
 				}
 			}
 

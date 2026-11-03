@@ -18,21 +18,21 @@ func TestAnalyze(t *testing.T) {
 			"detect additions and removals in simple maps",
 			map[string]any{
 				"host":    "hexlet.io",
-				"timeout": 50.0,
+				"timeout": int64(50),
 				"proxy":   "123.234.53.22",
 				"follow":  false,
 				"secret":  "null",
 			},
 			map[string]any{
 				"host":    "hexlet.io",
-				"timeout": 100.0,
+				"timeout": int64(100),
 				"proxy":   "123.235.53.22",
 				"follow":  true,
 				"secret":  "null",
 			},
 			*ContainerNode("root", map[string]*DiffNode{
 				"host":    UnchangedNode("host", "hexlet.io"),
-				"timeout": ChangedNode("timeout", 50.0, 100.0),
+				"timeout": ChangedNode("timeout", int64(50), int64(100)),
 				"proxy":   ChangedNode("proxy", "123.234.53.22", "123.235.53.22"),
 				"follow":  ChangedNode("follow", false, true),
 				"secret":  UnchangedNode("secret", "null"),
@@ -42,17 +42,17 @@ func TestAnalyze(t *testing.T) {
 			"detect equal simple maps",
 			map[string]any{
 				"host":    "hexlet.io",
-				"timeout": 50.0,
+				"timeout": int64(50),
 				"proxy":   "123.234.53.22",
 			},
 			map[string]any{
 				"host":    "hexlet.io",
-				"timeout": 50.0,
+				"timeout": int64(50),
 				"proxy":   "123.234.53.22",
 			},
 			*ContainerNode("root", map[string]*DiffNode{
 				"host":    UnchangedNode("host", "hexlet.io"),
-				"timeout": UnchangedNode("timeout", 50.0),
+				"timeout": UnchangedNode("timeout", int64(50)),
 				"proxy":   UnchangedNode("proxy", "123.234.53.22"),
 			}),
 		},
@@ -61,7 +61,7 @@ func TestAnalyze(t *testing.T) {
 			map[string]any{
 				"common": map[string]any{
 					"setting1": "Value 1",
-					"setting2": 200.0,
+					"setting2": int64(200),
 					"setting3": true,
 					"setting6": map[string]any{
 						"key": "value",
@@ -77,7 +77,7 @@ func TestAnalyze(t *testing.T) {
 			},
 			map[string]any{
 				"common": map[string]any{
-					"setting2": 200.0,
+					"setting2": int64(200),
 					"setting3": true,
 					"setting6": map[string]any{
 						"key": "value",
@@ -95,16 +95,16 @@ func TestAnalyze(t *testing.T) {
 					"secret": "null",
 				},
 				"group2": map[string]any{
-					"abc": 12345.0,
+					"abc": int64(12345),
 					"deep": map[string]any{
-						"id": 45.0,
+						"id": int64(45),
 					},
 				},
 			},
 			*ContainerNode("root", map[string]*DiffNode{
 				"common": ContainerNode("common", map[string]*DiffNode{
 					"setting1": DeletedNode("setting1", "Value 1"),
-					"setting2": UnchangedNode("setting2", 200.0),
+					"setting2": UnchangedNode("setting2", int64(200)),
 					"setting3": UnchangedNode("setting3", true),
 					"setting6": ContainerNode("setting6", map[string]*DiffNode{
 						"key": UnchangedNode("key", "value"),
@@ -122,9 +122,9 @@ func TestAnalyze(t *testing.T) {
 					"secret": AddedNode("secret", "null"),
 				}),
 				"group2": AddedNode("group2", map[string]any{
-					"abc": 12345.0,
+					"abc": int64(12345),
 					"deep": map[string]any{
-						"id": 45.0,
+						"id": int64(45),
 					},
 				}),
 			}),
@@ -132,12 +132,12 @@ func TestAnalyze(t *testing.T) {
 		{
 			"detect additions and removals in arrays",
 			map[string]any{
-				"numbers":   []any{1.0, 6.0, 9.0},
+				"numbers":   []any{int64(1), int64(6), int64(9)},
 				"others":    []any{"hello", "world", "null"},
 				"languages": []any{"GO", "RUST", "PYTHON"},
 			},
 			map[string]any{
-				"numbers":   []any{1.0, 6.0, 9.0, 22.6},
+				"numbers":   []any{int64(1), int64(6), int64(9), 22.6},
 				"others":    []any{"hello", "world"},
 				"languages": []any{"GO", "RUST", "PYTHON"},
 			},
@@ -145,8 +145,8 @@ func TestAnalyze(t *testing.T) {
 				"languages": UnchangedNode("languages", []any{"GO", "RUST", "PYTHON"}),
 				"numbers": ChangedNode(
 					"numbers",
-					[]any{1.0, 6.0, 9.0},
-					[]any{1.0, 6.0, 9.0, 22.6},
+					[]any{int64(1), int64(6), int64(9)},
+					[]any{int64(1), int64(6), int64(9), 22.6},
 				),
 				"others": ChangedNode(
 					"others",
@@ -167,7 +167,7 @@ func TestAnalyze(t *testing.T) {
 			map[string]any{
 				"common": map[string]any{
 					"setting1": "Value 1",
-					"setting2": 200.0,
+					"setting2": int64(200),
 					"setting3": true,
 					"setting6": map[string]any{
 						"key": "value",
@@ -184,7 +184,7 @@ func TestAnalyze(t *testing.T) {
 			*ContainerNode("root", map[string]*DiffNode{
 				"common": AddedNode("common", map[string]any{
 					"setting1": "Value 1",
-					"setting2": 200.0,
+					"setting2": int64(200),
 					"setting3": true,
 					"setting6": map[string]any{
 						"key": "value",
@@ -204,7 +204,7 @@ func TestAnalyze(t *testing.T) {
 			map[string]any{
 				"common": map[string]any{
 					"setting1": "Value 1",
-					"setting2": 200.0,
+					"setting2": int64(200),
 					"setting3": true,
 					"setting6": map[string]any{
 						"key": "value",
@@ -222,7 +222,7 @@ func TestAnalyze(t *testing.T) {
 			*ContainerNode("root", map[string]*DiffNode{
 				"common": DeletedNode("common", map[string]any{
 					"setting1": "Value 1",
-					"setting2": 200.0,
+					"setting2": int64(200),
 					"setting3": true,
 					"setting6": map[string]any{
 						"key": "value",
@@ -241,8 +241,8 @@ func TestAnalyze(t *testing.T) {
 			"detects object to scalar changes",
 			map[string]any{
 				"object": map[string]any{
-					"item1": 1.0,
-					"item2": 2.0,
+					"item1": int64(1),
+					"item2": int64(2),
 				},
 			},
 			map[string]any{
@@ -252,8 +252,8 @@ func TestAnalyze(t *testing.T) {
 				"object": ChangedNode(
 					"object",
 					map[string]any{
-						"item1": 1.0,
-						"item2": 2.0,
+						"item1": int64(1),
+						"item2": int64(2),
 					},
 					"hello, world",
 				),
@@ -266,8 +266,8 @@ func TestAnalyze(t *testing.T) {
 			},
 			map[string]any{
 				"object": map[string]any{
-					"item1": 1.0,
-					"item2": 2.0,
+					"item1": int64(1),
+					"item2": int64(2),
 				},
 			},
 			*ContainerNode("root", map[string]*DiffNode{
@@ -275,10 +275,22 @@ func TestAnalyze(t *testing.T) {
 					"object",
 					"hello, world",
 					map[string]any{
-						"item1": 1.0,
-						"item2": 2.0,
+						"item1": int64(1),
+						"item2": int64(2),
 					},
 				),
+			}),
+		},
+		{
+			"detect change between large integers beyond float64 precision",
+			map[string]any{
+				"id": int64(9007199254740993), // 2^53 + 1
+			},
+			map[string]any{
+				"id": int64(9007199254740994), // 2^53 + 2
+			},
+			*ContainerNode("root", map[string]*DiffNode{
+				"id": ChangedNode("id", int64(9007199254740993), int64(9007199254740994)),
 			}),
 		},
 	}

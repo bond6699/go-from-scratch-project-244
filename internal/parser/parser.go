@@ -66,17 +66,17 @@ func Parse(filepath string) (map[string]any, error) {
 
 	bytes, err := os.ReadFile(filepath)
 	if err != nil {
-		return result, fmt.Errorf("%w: %w", errReadFile, err)
+		return result, fmt.Errorf("%w %q: %w", errReadFile, filepath, err)
 	}
 
 	parser, err := NewParser(filepath)
 	if err != nil {
-		return result, fmt.Errorf("%w: %w", errCreateParserFile, err)
+		return result, fmt.Errorf("%w %q: %w", errCreateParserFile, filepath, err)
 	}
 
 	result, err = parser.Parse(bytes)
 	if err != nil {
-		return result, fmt.Errorf("%w: %w", errParse, err)
+		return result, fmt.Errorf("%w %q: %w", errParse, filepath, err)
 	}
 
 	return result, nil
