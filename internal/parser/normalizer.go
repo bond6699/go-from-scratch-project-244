@@ -1,35 +1,53 @@
 package parser
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
-func Normalize(data map[string]any) map[string]any {
+var errUnsupportedKeyType = fmt.Errorf("only string keys are supported")
+
+func Normalize(data map[string]any) (map[string]any, error) {
 	for key := range data {
-		data[key] = NormalizeValue(data[key])
+		result, err := NormalizeValue(data[key])
+		if err != nil {
+			return nil, err
+		}
+
+		data[key] = result
 	}
 
-	return data
+	return data, nil
 }
 
-func NormalizeValue(value any) any {
+func NormalizeValue(value any) (any, error) {
 	switch v := value.(type) {
 	case map[string]any:
 		return Normalize(v)
 
+	case map[any]any:
+		return nil, fmt.Errorf("value %v not supported: %w", v, errUnsupportedKeyType)
+
 	case []any:
 		for i := range v {
-			v[i] = NormalizeValue(v[i])
+			result, err := NormalizeValue(v[i])
+			if err != nil {
+				return nil, err
+			}
+
+			v[i] = result
 		}
 
-		return v
+		return v, nil
 
 	case int, int32, int64, uint64:
-		return normalizeInteger(v)
+		return normalizeInteger(v), nil
 
 	case float32, float64:
-		return normalizeFloat(v)
+		return normalizeFloat(v), nil
 
 	default:
-		return value
+		return value, nil
 	}
 }
 

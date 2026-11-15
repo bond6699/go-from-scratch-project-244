@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"code"
-
 	"github.com/urfave/cli/v3"
+
+	"code"
 )
 
 var (

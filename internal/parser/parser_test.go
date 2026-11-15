@@ -239,7 +239,54 @@ func TestNormalize(t *testing.T) {
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			require.Equal(t, td.want, Normalize(td.input))
+			got, err := Normalize(td.input)
+			require.NoError(t, err)
+			require.Equal(t, td.want, got)
+		})
+	}
+}
+
+func TestNormalizeWithError(t *testing.T) {
+	tests := []struct {
+		name  string
+		input map[string]any
+	}{
+		{
+			name: "direct map[any]any under string key",
+			input: map[string]any{
+				"invalid_map": map[any]any{
+					123: "value",
+				},
+			},
+		},
+		{
+			name: "deeply nested map[any]any",
+			input: map[string]any{
+				"level1": map[string]any{
+					"level2": map[any]any{
+						true: "boolean key",
+					},
+				},
+			},
+		},
+		{
+			name: "map[any]any in slice",
+			input: map[string]any{
+				"list": []any{
+					"ok_item",
+					map[any]any{
+						404: "not found",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Normalize(tt.input)
+			require.ErrorIs(t, err, errUnsupportedKeyType)
+			require.Nil(t, got)
 		})
 	}
 }
@@ -251,8 +298,11 @@ func TestNormalizeValue_LargeNumbersNotCollapsed(t *testing.T) {
 	a := int64(9007199254740993) // 2^53 + 1
 	b := int64(9007199254740994) // 2^53 + 2
 
-	na := NormalizeValue(a)
-	nb := NormalizeValue(b)
+	na, err := NormalizeValue(a)
+	require.NoError(t, err)
+
+	nb, err := NormalizeValue(b)
+	require.NoError(t, err)
 
 	if na == nb {
 		t.Errorf("distinct large integers collapsed to the same value: %v", na)

@@ -29,8 +29,16 @@ func GenDiff(filepath1, filepath2, format string) (string, error) {
 		return "", fmt.Errorf("%w %q: %w", errFailedProcessSecondFile, filepath2, err)
 	}
 
-	data1 = parser.Normalize(data1)
-	data2 = parser.Normalize(data2)
+	data1, err = parser.Normalize(data1)
+	if err != nil {
+		return "", err
+	}
+
+	data2, err = parser.Normalize(data2)
+	if err != nil {
+		return "", err
+	}
+
 	diff := analyzer.Analyze(data1, data2)
 
 	result, err := formatter.Format(format, diff)
