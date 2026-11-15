@@ -25,8 +25,8 @@ Property 'timeout' was updated. From 50 to 100`,
 		{
 			"detect correct PLAIN result with array values",
 			diffWithArrays,
-			`Property 'numbers' was updated. From [1 6 9] to [1 6 9 22.6]
-Property 'others' was updated. From [hello world null] to [hello world]`,
+			`Property 'numbers' was updated. From [complex value] to [complex value]
+Property 'others' was updated. From [complex value] to [complex value]`,
 		},
 		{
 			"detect saved nil value in PLAIN result",

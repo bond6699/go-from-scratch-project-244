@@ -39,7 +39,7 @@ func (fp FormatterPlain) formatNode(builder *strings.Builder, path []string, nod
 		fmt.Fprintf(
 			builder, "Property '%s' was added with value: %v\n",
 			strings.Join(path, "."),
-			fp.formatValue(node.NewValue(), hasChild),
+			fp.formatValue(node.GetNewValue(), hasChild),
 		)
 
 	case analyzer.Deleted:
@@ -49,8 +49,8 @@ func (fp FormatterPlain) formatNode(builder *strings.Builder, path []string, nod
 		fmt.Fprintf(
 			builder, "Property '%s' was updated. From %v to %v\n",
 			strings.Join(path, "."),
-			fp.formatValue(node.OldValue(), hasChild),
-			fp.formatValue(node.NewValue(), hasChild),
+			fp.formatValue(node.GetOldValue(), hasChild),
+			fp.formatValue(node.GetNewValue(), hasChild),
 		)
 	}
 }
@@ -61,12 +61,18 @@ func (fp FormatterPlain) formatValue(value any, hasChild bool) any {
 	}
 
 	_, isMap := value.(map[string]any)
-	if hasChild || isMap {
+	_, isArray := value.([]any)
+
+	if hasChild || isMap || isArray {
 		return "[complex value]"
 	}
 
 	if v, ok := value.(string); ok {
 		return fmt.Sprintf("'%s'", v)
+	}
+
+	if v, isString := value.(string); isString {
+		return strings.ReplaceAll(v, "\n", "\\n")
 	}
 
 	return value

@@ -46,7 +46,7 @@ func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node
 			"\n%s + %s: %v",
 			getMarkedIndent(indent),
 			node.Key,
-			fs.formatValue(node.NewValue(), indent+1),
+			fs.formatValue(node.GetNewValue(), indent+1),
 		)
 	case analyzer.Deleted:
 		fmt.Fprintf(
@@ -54,7 +54,7 @@ func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node
 			"\n%s - %s: %v",
 			getMarkedIndent(indent),
 			node.Key,
-			fs.formatValue(node.OldValue(), indent+1),
+			fs.formatValue(node.GetOldValue(), indent+1),
 		)
 	case analyzer.Changed:
 		fmt.Fprintf(
@@ -62,17 +62,17 @@ func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node
 			"\n%s - %s: %v",
 			getMarkedIndent(indent),
 			node.Key,
-			fs.formatValue(node.OldValue(), indent+1),
+			fs.formatValue(node.GetOldValue(), indent+1),
 		)
 		fmt.Fprintf(
 			builder,
 			"\n%s + %s: %v",
 			getMarkedIndent(indent),
 			node.Key,
-			fs.formatValue(node.NewValue(), indent+1),
+			fs.formatValue(node.GetNewValue(), indent+1),
 		)
 	case analyzer.Unchanged:
-		fmt.Fprintf(builder, "\n%s%s: %v", getIndent(indent), node.Key, fs.formatValue(node.OldValue(), indent+1))
+		fmt.Fprintf(builder, "\n%s%s: %v", getIndent(indent), node.Key, fs.formatValue(node.GetOldValue(), indent+1))
 	}
 }
 

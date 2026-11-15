@@ -16,8 +16,8 @@ var (
 )
 
 type DiffNode struct {
-	OldV     *any                 `json:"old,omitempty"`
-	NewV     *any                 `json:"new,omitempty"`
+	OldValue *any                 `json:"old,omitempty"`
+	NewValue *any                 `json:"new,omitempty"`
 	Children map[string]*DiffNode `json:"child,omitempty"`
 	Key      string               `json:"key,omitempty"`
 	Status   DiffStatus           `json:"status,omitempty"`
@@ -31,19 +31,19 @@ func NewDiffNode(key string, status DiffStatus) *DiffNode {
 }
 
 func (node *DiffNode) SetOldValue(oldValue any) {
-	node.OldV = &oldValue
+	node.OldValue = &oldValue
 }
 
 func (node *DiffNode) SetNewValue(newValue any) {
-	node.NewV = &newValue
+	node.NewValue = &newValue
 }
 
-func (node *DiffNode) OldValue() any {
-	return *node.OldV
+func (node *DiffNode) GetOldValue() any {
+	return *node.OldValue
 }
 
-func (node *DiffNode) NewValue() any {
-	return *node.NewV
+func (node *DiffNode) GetNewValue() any {
+	return *node.NewValue
 }
 
 func Analyze(data1, data2 map[string]any) *DiffNode {
