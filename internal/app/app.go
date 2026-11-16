@@ -50,8 +50,6 @@ func runDiff(ctx context.Context, cmd *cli.Command) error {
 }
 
 func validatePath(path string) error {
-	path = strings.TrimSpace(path)
-
 	info, err := os.Stat(path)
 	if err != nil {
 		return err
