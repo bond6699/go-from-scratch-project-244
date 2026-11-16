@@ -49,6 +49,11 @@ Property 'group2' was added with value: [complex value]`,
 			"Property 'docsIndex' was updated. From '124/365-44, 124/365-45' to '124/365-45, 124/365-46'",
 		},
 		{
+			"detect correct PLAIN result with multiline string",
+			diffWithMultilineString,
+			"Property 'description' was updated. From 'first line\\nsecond line' to 'single line'",
+		},
+		{
 			"detect correct PLAIN result with empty value",
 			emptyDiff,
 			"",

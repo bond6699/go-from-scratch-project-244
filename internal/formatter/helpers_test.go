@@ -55,5 +55,9 @@ var (
 		"docsIndex": ChangedNode("docsIndex", "124/365-44, 124/365-45", "124/365-45, 124/365-46"),
 	})
 
+	diffWithMultilineString = *ContainerNode("root", map[string]*analyzer.DiffNode{
+		"description": ChangedNode("description", "first line\nsecond line", "single line"),
+	})
+
 	emptyDiff = *ContainerNode("root", map[string]*analyzer.DiffNode{})
 )

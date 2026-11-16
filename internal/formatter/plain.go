@@ -124,11 +124,7 @@ func (fp FormatterPlain) formatValue(value any, hasChild bool) any {
 	}
 
 	if v, ok := value.(string); ok {
-		return fmt.Sprintf("'%s'", v)
-	}
-
-	if v, isString := value.(string); isString {
-		return strings.ReplaceAll(v, "\n", "\\n")
+		return strings.ReplaceAll(fmt.Sprintf("'%s'", v), "\n", "\\n")
 	}
 
 	return value
