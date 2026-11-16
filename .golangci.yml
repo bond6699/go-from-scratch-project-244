@@ -82,11 +82,18 @@ linters:
 
 formatters:
   enable:
+    - gci
     - goimports
 #    - gofumpt
     - golines
 
   settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(code)
+
     gofumpt:
       extra:
         group-params: true
