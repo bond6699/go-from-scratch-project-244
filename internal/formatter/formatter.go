@@ -12,6 +12,7 @@ var (
 	)
 	errCreateFormatter = fmt.Errorf("failed to create formatter")
 	errFormatting      = fmt.Errorf("failed formatting")
+	errGetNodeValue    = fmt.Errorf("failed to get node value")
 )
 
 type Formatter interface {

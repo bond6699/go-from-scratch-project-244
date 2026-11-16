@@ -21,7 +21,9 @@ func (fs FormatterStylish) Format(node *analyzer.DiffNode) (string, error) {
 	builder.WriteString("{")
 
 	for _, key := range fs.getSortedChildKeys(node) {
-		fs.formatNode(builder, 1, node.Children[key])
+		if err := fs.formatNode(builder, 1, node.Children[key]); err != nil {
+			return "", err
+		}
 	}
 
 	builder.WriteString("\n}")
@@ -29,51 +31,109 @@ func (fs FormatterStylish) Format(node *analyzer.DiffNode) (string, error) {
 	return builder.String(), nil
 }
 
-func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node *analyzer.DiffNode) {
+func (fs FormatterStylish) formatNode(builder *strings.Builder, indent int, node *analyzer.DiffNode) error {
 	switch node.Status {
 	case analyzer.Container:
-		fmt.Fprintf(builder, "\n%s%s: {", getIndent(indent), node.Key)
-
-		for _, key := range fs.getSortedChildKeys(node) {
-			fs.formatNode(builder, indent+1, node.Children[key])
-		}
-
-		fmt.Fprintf(builder, "\n%s}", getIndent(indent))
-
+		return fs.formatContainer(builder, indent, node)
 	case analyzer.Added:
-		fmt.Fprintf(
-			builder,
-			"\n%s + %s: %v",
-			getMarkedIndent(indent),
-			node.Key,
-			fs.formatValue(node.GetNewValue(), indent+1),
-		)
+		return fs.formatAdded(builder, indent, node)
 	case analyzer.Deleted:
-		fmt.Fprintf(
-			builder,
-			"\n%s - %s: %v",
-			getMarkedIndent(indent),
-			node.Key,
-			fs.formatValue(node.GetOldValue(), indent+1),
-		)
+		return fs.formatDeleted(builder, indent, node)
 	case analyzer.Changed:
-		fmt.Fprintf(
-			builder,
-			"\n%s - %s: %v",
-			getMarkedIndent(indent),
-			node.Key,
-			fs.formatValue(node.GetOldValue(), indent+1),
-		)
-		fmt.Fprintf(
-			builder,
-			"\n%s + %s: %v",
-			getMarkedIndent(indent),
-			node.Key,
-			fs.formatValue(node.GetNewValue(), indent+1),
-		)
+		return fs.formatChanged(builder, indent, node)
 	case analyzer.Unchanged:
-		fmt.Fprintf(builder, "\n%s%s: %v", getIndent(indent), node.Key, fs.formatValue(node.GetOldValue(), indent+1))
+		return fs.formatUnchanged(builder, indent, node)
 	}
+
+	return nil
+}
+
+func (fs FormatterStylish) formatContainer(builder *strings.Builder, indent int, node *analyzer.DiffNode) error {
+	fmt.Fprintf(builder, "\n%s%s: {", getIndent(indent), node.Key)
+
+	for _, key := range fs.getSortedChildKeys(node) {
+		if err := fs.formatNode(builder, indent+1, node.Children[key]); err != nil {
+			return err
+		}
+	}
+
+	fmt.Fprintf(builder, "\n%s}", getIndent(indent))
+
+	return nil
+}
+
+func (fs FormatterStylish) formatAdded(builder *strings.Builder, indent int, node *analyzer.DiffNode) error {
+	ok, newValue := node.GetNewValue()
+	if !ok {
+		return fmt.Errorf("%w: key %q", errGetNodeValue, node.Key)
+	}
+
+	fmt.Fprintf(
+		builder,
+		"\n%s + %s: %v",
+		getMarkedIndent(indent),
+		node.Key,
+		fs.formatValue(newValue, indent+1),
+	)
+
+	return nil
+}
+
+func (fs FormatterStylish) formatDeleted(builder *strings.Builder, indent int, node *analyzer.DiffNode) error {
+	ok, oldValue := node.GetOldValue()
+	if !ok {
+		return fmt.Errorf("%w: key %q", errGetNodeValue, node.Key)
+	}
+
+	fmt.Fprintf(
+		builder,
+		"\n%s - %s: %v",
+		getMarkedIndent(indent),
+		node.Key,
+		fs.formatValue(oldValue, indent+1),
+	)
+
+	return nil
+}
+
+func (fs FormatterStylish) formatChanged(builder *strings.Builder, indent int, node *analyzer.DiffNode) error {
+	okOld, oldValue := node.GetOldValue()
+	if !okOld {
+		return fmt.Errorf("%w: key %q", errGetNodeValue, node.Key)
+	}
+
+	okNew, newValue := node.GetNewValue()
+	if !okNew {
+		return fmt.Errorf("%w: key %q", errGetNodeValue, node.Key)
+	}
+
+	fmt.Fprintf(
+		builder,
+		"\n%s - %s: %v",
+		getMarkedIndent(indent),
+		node.Key,
+		fs.formatValue(oldValue, indent+1),
+	)
+	fmt.Fprintf(
+		builder,
+		"\n%s + %s: %v",
+		getMarkedIndent(indent),
+		node.Key,
+		fs.formatValue(newValue, indent+1),
+	)
+
+	return nil
+}
+
+func (fs FormatterStylish) formatUnchanged(builder *strings.Builder, indent int, node *analyzer.DiffNode) error {
+	ok, oldValue := node.GetOldValue()
+	if !ok {
+		return fmt.Errorf("%w: key %q", errGetNodeValue, node.Key)
+	}
+
+	fmt.Fprintf(builder, "\n%s%s: %v", getIndent(indent), node.Key, fs.formatValue(oldValue, indent+1))
+
+	return nil
 }
 
 func (fs FormatterStylish) formatValue(value any, indent int) any {

@@ -122,6 +122,24 @@ func TestFormat(t *testing.T) {
 			"",
 			errFormatting,
 		},
+		{
+			"detect error errFormatting stylish missing value",
+			"stylish",
+			*ContainerNode("root", map[string]*analyzer.DiffNode{
+				"bad": analyzer.NewDiffNode("bad", analyzer.Added),
+			}),
+			"",
+			errGetNodeValue,
+		},
+		{
+			"detect error errFormatting plain missing value",
+			"plain",
+			*ContainerNode("root", map[string]*analyzer.DiffNode{
+				"bad": analyzer.NewDiffNode("bad", analyzer.Added),
+			}),
+			"",
+			errGetNodeValue,
+		},
 	}
 
 	for _, td := range tests {

@@ -23,13 +23,6 @@ type DiffNode struct {
 	Status   DiffStatus           `json:"status,omitempty"`
 }
 
-func NewDiffNode(key string, status DiffStatus) *DiffNode {
-	return &DiffNode{
-		Key:    key,
-		Status: status,
-	}
-}
-
 func (node *DiffNode) SetOldValue(oldValue any) {
 	node.OldValue = &oldValue
 }
@@ -38,41 +31,89 @@ func (node *DiffNode) SetNewValue(newValue any) {
 	node.NewValue = &newValue
 }
 
-func (node *DiffNode) GetOldValue() any {
-	return *node.OldValue
+func (node *DiffNode) GetOldValue() (ok bool, value any) {
+	if node.OldValue == nil {
+		return false, nil
+	}
+
+	return true, *node.OldValue
 }
 
-func (node *DiffNode) GetNewValue() any {
-	return *node.NewValue
+func (node *DiffNode) GetNewValue() (ok bool, value any) {
+	if node.NewValue == nil {
+		return false, nil
+	}
+
+	return true, *node.NewValue
+}
+
+func NewDiffNode(key string, status DiffStatus) *DiffNode {
+	return &DiffNode{
+		Key:    key,
+		Status: status,
+	}
+}
+
+func NewAddedNode(key string, value any) *DiffNode {
+	node := NewDiffNode(key, Added)
+	node.SetNewValue(value)
+
+	return node
+}
+
+func NewDeletedNode(key string, value any) *DiffNode {
+	node := NewDiffNode(key, Deleted)
+	node.SetOldValue(value)
+
+	return node
+}
+
+func NewUnchangedNode(key string, value any) *DiffNode {
+	node := NewDiffNode(key, Unchanged)
+	node.SetOldValue(value)
+
+	return node
+}
+
+func NewChangedNode(key string, oldValue, newValue any) *DiffNode {
+	node := NewDiffNode(key, Changed)
+	node.SetOldValue(oldValue)
+	node.SetNewValue(newValue)
+
+	return node
+}
+
+func NewContainerNode(key string, children map[string]*DiffNode) *DiffNode {
+	return &DiffNode{
+		Key:      key,
+		Status:   Container,
+		Children: children,
+	}
 }
 
 func Analyze(data1, data2 map[string]any) *DiffNode {
-	root := NewDiffNode("root", Container)
-	root.Children = map[string]*DiffNode{}
-
+	children := map[string]*DiffNode{}
 	keys := getSortedKeysUnion(data1, data2)
 
 	for _, key := range keys {
 		oldValue, oldExist := data1[key]
 		newValue, newExist := data2[key]
 
-		root.Children[key] = AnalyzeValue(key, oldValue, oldExist, newValue, newExist)
+		children[key] = AnalyzeValue(key, oldValue, oldExist, newValue, newExist)
 	}
 
-	return root
+	return NewContainerNode("root", children)
 }
 
 func AnalyzeValue(key string, oldValue any, oldExist bool, newValue any, newExist bool) *DiffNode {
 	if !oldExist {
-		node := NewDiffNode(key, Added)
-		node.SetNewValue(newValue)
+		node := NewAddedNode(key, newValue)
 
 		return node
 	}
 
 	if !newExist {
-		node := NewDiffNode(key, Deleted)
-		node.SetOldValue(oldValue)
+		node := NewDeletedNode(key, oldValue)
 
 		return node
 	}
@@ -92,29 +133,23 @@ func AnalyzeValue(key string, oldValue any, oldExist bool, newValue any, newExis
 
 	if oldIsArray && newIsArray {
 		if reflect.DeepEqual(oldArray, newArray) {
-			node := NewDiffNode(key, Unchanged)
-			node.SetOldValue(oldArray)
+			node := NewUnchangedNode(key, oldArray)
 
 			return node
 		}
 
-		node := NewDiffNode(key, Changed)
-		node.SetOldValue(oldArray)
-		node.SetNewValue(newArray)
+		node := NewChangedNode(key, oldArray, newArray)
 
 		return node
 	}
 
 	if oldValue == newValue {
-		node := NewDiffNode(key, Unchanged)
-		node.SetOldValue(oldValue)
+		node := NewUnchangedNode(key, oldValue)
 
 		return node
 	}
 
-	node := NewDiffNode(key, Changed)
-	node.SetOldValue(oldValue)
-	node.SetNewValue(newValue)
+	node := NewChangedNode(key, oldValue, newValue)
 
 	return node
 }
