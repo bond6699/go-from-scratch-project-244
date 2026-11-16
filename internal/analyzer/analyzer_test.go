@@ -5,9 +5,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"code/internal/parser"
 )
 
 func TestAnalyze(t *testing.T) {
+	complex1 := loadFixture(t, "../../testdata/complex1.json")
+	complex2 := loadFixture(t, "../../testdata/complex2.json")
+
 	tests := []struct {
 		name string
 		map1 map[string]any
@@ -58,49 +64,8 @@ func TestAnalyze(t *testing.T) {
 		},
 		{
 			"detect additions and removals in complex maps",
-			map[string]any{
-				"common": map[string]any{
-					"setting1": "Value 1",
-					"setting2": int64(200),
-					"setting3": true,
-					"setting6": map[string]any{
-						"key": "value",
-						"doge": map[string]any{
-							"wow": "",
-						},
-					},
-				},
-				"group1": map[string]any{
-					"baz": "bas",
-					"foo": "bar",
-				},
-			},
-			map[string]any{
-				"common": map[string]any{
-					"setting2": int64(200),
-					"setting3": true,
-					"setting6": map[string]any{
-						"key": "value",
-						"doge": map[string]any{
-							"wow": "",
-						},
-					},
-				},
-				"group1": map[string]any{
-					"baz": "bas",
-					"foo": "bar",
-					"nest": map[string]any{
-						"key": "value",
-					},
-					"secret": "null",
-				},
-				"group2": map[string]any{
-					"abc": int64(12345),
-					"deep": map[string]any{
-						"id": int64(45),
-					},
-				},
-			},
+			complex1,
+			complex2,
 			*ContainerNode("root", map[string]*DiffNode{
 				"common": ContainerNode("common", map[string]*DiffNode{
 					"setting1": DeletedNode("setting1", "Value 1"),
@@ -164,23 +129,7 @@ func TestAnalyze(t *testing.T) {
 		{
 			"detect difference between empty map and map with added all keys",
 			map[string]any{},
-			map[string]any{
-				"common": map[string]any{
-					"setting1": "Value 1",
-					"setting2": int64(200),
-					"setting3": true,
-					"setting6": map[string]any{
-						"key": "value",
-						"doge": map[string]any{
-							"wow": "",
-						},
-					},
-				},
-				"group1": map[string]any{
-					"baz": "bas",
-					"foo": "bar",
-				},
-			},
+			complex1,
 			*ContainerNode("root", map[string]*DiffNode{
 				"common": AddedNode("common", map[string]any{
 					"setting1": "Value 1",
@@ -201,23 +150,7 @@ func TestAnalyze(t *testing.T) {
 		},
 		{
 			"detect difference between map with deleted all keys and empty map",
-			map[string]any{
-				"common": map[string]any{
-					"setting1": "Value 1",
-					"setting2": int64(200),
-					"setting3": true,
-					"setting6": map[string]any{
-						"key": "value",
-						"doge": map[string]any{
-							"wow": "",
-						},
-					},
-				},
-				"group1": map[string]any{
-					"baz": "bas",
-					"foo": "bar",
-				},
-			},
+			complex1,
 			map[string]any{},
 			*ContainerNode("root", map[string]*DiffNode{
 				"common": DeletedNode("common", map[string]any{
@@ -341,4 +274,16 @@ func AddedNode(key string, value any) *DiffNode {
 	node.SetNewValue(value)
 
 	return node
+}
+
+func loadFixture(t *testing.T, filepath string) map[string]any {
+	t.Helper()
+
+	data, err := parser.Parse(filepath)
+	require.NoError(t, err)
+
+	data, err = parser.Normalize(data)
+	require.NoError(t, err)
+
+	return data
 }
