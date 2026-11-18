@@ -2,12 +2,13 @@ package formatter
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"code/internal/analyzer"
 )
 
-var errFormatToJSON = fmt.Errorf("failed to format to JSON")
+var errFormatToJSON = errors.New("failed to format to JSON")
 
 type FormatterJSON struct{}
 

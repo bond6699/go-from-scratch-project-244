@@ -124,7 +124,10 @@ func (fp FormatterPlain) formatValue(value any, hasChild bool) any {
 	}
 
 	if v, ok := value.(string); ok {
-		return strings.ReplaceAll(fmt.Sprintf("'%s'", v), "\n", "\\n")
+		escaped := strings.ReplaceAll(v, "\\", "\\\\")
+		escaped = strings.ReplaceAll(escaped, "\n", "\\n")
+
+		return fmt.Sprintf("'%s'", escaped)
 	}
 
 	return value

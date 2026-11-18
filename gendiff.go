@@ -1,6 +1,7 @@
 package code
 
 import (
+	"errors"
 	"fmt"
 
 	"code/internal/analyzer"
@@ -9,9 +10,10 @@ import (
 )
 
 var (
-	errFailedProcessFirstFile  = fmt.Errorf("failed to process first file")
-	errFailedProcessSecondFile = fmt.Errorf("failed to process second file")
-	errFailedFormat            = fmt.Errorf("failed to format")
+	errFailedProcessFirstFile  = errors.New("failed to process first file")
+	errFailedProcessSecondFile = errors.New("failed to process second file")
+	errFailedFormat            = errors.New("failed to format")
+	errFailedNormalize         = errors.New("failed to normalize")
 )
 
 func GenDiff(filepath1, filepath2, format string) (string, error) {
@@ -31,12 +33,12 @@ func GenDiff(filepath1, filepath2, format string) (string, error) {
 
 	data1, err = parser.Normalize(data1)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%w %q: %w", errFailedNormalize, filepath1, err)
 	}
 
 	data2, err = parser.Normalize(data2)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%w %q: %w", errFailedNormalize, filepath2, err)
 	}
 
 	diff := analyzer.Analyze(data1, data2)

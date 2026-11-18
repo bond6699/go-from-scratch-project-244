@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -12,9 +13,9 @@ import (
 )
 
 var (
-	errInvalidArguments  = fmt.Errorf("expected exactly 2 file paths")
-	errValidatePath      = fmt.Errorf("failed to validate path")
-	errUnsupportedFormat = fmt.Errorf(
+	errInvalidArguments  = errors.New("expected exactly 2 file paths")
+	errValidatePath      = errors.New("failed to validate path")
+	errUnsupportedFormat = errors.New(
 		"format is not supported; select one of the possible options (stylish, plain, json)",
 	)
 )
@@ -102,7 +103,7 @@ func New() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name: "format", Aliases: []string{"f"},
-				Usage: "output format (default: \"stylish\")",
+				Usage: "output format",
 				Value: "stylish",
 			},
 		},

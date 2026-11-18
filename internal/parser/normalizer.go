@@ -1,11 +1,12 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"math"
 )
 
-var errUnsupportedKeyType = fmt.Errorf("only string keys are supported")
+var errUnsupportedKeyType = errors.New("only string keys are supported")
 
 func Normalize(data map[string]any) (map[string]any, error) {
 	for key := range data {

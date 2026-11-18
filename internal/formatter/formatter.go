@@ -1,18 +1,19 @@
 package formatter
 
 import (
+	"errors"
 	"fmt"
 
 	"code/internal/analyzer"
 )
 
 var (
-	errUnsupportedFormat = fmt.Errorf(
+	errUnsupportedFormat = errors.New(
 		"format is not supported; select one of the possible options (stylish, plain, json)",
 	)
-	errCreateFormatter = fmt.Errorf("failed to create formatter")
-	errFormatting      = fmt.Errorf("failed formatting")
-	errGetNodeValue    = fmt.Errorf("failed to get node value")
+	errCreateFormatter = errors.New("failed to create formatter")
+	errFormatting      = errors.New("failed formatting")
+	errGetNodeValue    = errors.New("failed to get node value")
 )
 
 type Formatter interface {

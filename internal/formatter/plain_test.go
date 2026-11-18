@@ -51,7 +51,12 @@ Property 'group2' was added with value: [complex value]`,
 		{
 			"detect correct PLAIN result with multiline string",
 			diffWithMultilineString,
-			"Property 'description' was updated. From 'first line\\nsecond line' to 'single line'",
+			`Property 'description' was updated. From 'first line\nsecond line' to 'single line'`,
+		},
+		{
+			"detect distinction between newline and literal backslash in PLAIN result",
+			diffWithNewlineAndLiteralBackslash,
+			`Property 'description' was updated. From 'a\nb' to 'a\\nb'`,
 		},
 		{
 			"detect correct PLAIN result with empty value",

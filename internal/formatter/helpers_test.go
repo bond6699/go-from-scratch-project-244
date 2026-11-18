@@ -59,5 +59,9 @@ var (
 		"description": ChangedNode("description", "first line\nsecond line", "single line"),
 	})
 
+	diffWithNewlineAndLiteralBackslash = *ContainerNode("root", map[string]*analyzer.DiffNode{
+		"description": ChangedNode("description", "a\nb", "a\\nb"),
+	})
+
 	emptyDiff = *ContainerNode("root", map[string]*analyzer.DiffNode{})
 )
