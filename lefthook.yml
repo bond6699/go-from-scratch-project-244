@@ -1,9 +1,9 @@
 pre-commit:
-      parallel: true
-      commands:
-        lint:
-          run: golangci-lint run
-        test:
-          run: go test -race -short ./...
-        secrets:
-          run: gitleaks protect --staged --verbose
+  parallel: true
+  commands:
+    lint:
+      run: golangci-lint run
+    test:
+      run: go test -race -short ./...
+    secrets:
+      run: gitleaks protect --staged --verbose
