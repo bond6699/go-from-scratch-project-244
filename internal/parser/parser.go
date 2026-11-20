@@ -2,21 +2,22 @@ package parser
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
 
 var (
-	errReadFile            = fmt.Errorf("failed read file")
-	errCreateParserFile    = fmt.Errorf("failed create parser")
-	errUnsupportedFileType = fmt.Errorf("not supported file type")
-	errParse               = fmt.Errorf("failed parse")
+	errReadFile            = errors.New("failed read file")
+	errCreateParserFile    = errors.New("failed create parser")
+	errUnsupportedFileType = errors.New("not supported file type")
+	errParse               = errors.New("failed parse")
 
-	errDecodeJSON = fmt.Errorf("failed to decode JSON")
-	errDecodeYAML = fmt.Errorf("failed to decode YAML")
+	errDecodeJSON = errors.New("failed to decode JSON")
+	errDecodeYAML = errors.New("failed to decode YAML")
 )
 
 type Parser interface {
@@ -50,33 +51,34 @@ func (yp YamlParser) Parse(bytes []byte) (map[string]any, error) {
 }
 
 func NewParser(path string) (Parser, error) {
-	if strings.HasSuffix(path, ".json") {
+	ext := filepath.Ext(path)
+
+	switch ext {
+	case ".json":
 		return JSONParser{}, nil
-	}
-
-	if strings.HasSuffix(path, ".yml") || strings.HasSuffix(path, ".yaml") {
+	case ".yml", ".yaml":
 		return YamlParser{}, nil
+	default:
+		return nil, fmt.Errorf("%w %s", errUnsupportedFileType, path)
 	}
-
-	return nil, fmt.Errorf("%w %s", errUnsupportedFileType, path)
 }
 
-func Parse(filepath string) (map[string]any, error) {
+func Parse(path string) (map[string]any, error) {
 	result := make(map[string]any)
 
-	bytes, err := os.ReadFile(filepath)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return result, fmt.Errorf("%w %q: %w", errReadFile, filepath, err)
+		return result, fmt.Errorf("%w %q: %w", errReadFile, path, err)
 	}
 
-	parser, err := NewParser(filepath)
+	parser, err := NewParser(path)
 	if err != nil {
-		return result, fmt.Errorf("%w %q: %w", errCreateParserFile, filepath, err)
+		return result, fmt.Errorf("%w %q: %w", errCreateParserFile, path, err)
 	}
 
 	result, err = parser.Parse(bytes)
 	if err != nil {
-		return result, fmt.Errorf("%w %q: %w", errParse, filepath, err)
+		return result, fmt.Errorf("%w %q: %w", errParse, path, err)
 	}
 
 	return result, nil

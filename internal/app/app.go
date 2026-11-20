@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/urfave/cli/v3"
 
@@ -20,19 +20,17 @@ var (
 	)
 )
 
-func getArgs(cmd *cli.Command) (filepath1, filepath2, format string) {
-	filepath1 = cmd.StringArg("filepath1")
-	filepath2 = cmd.StringArg("filepath2")
-	format = cmd.String("format")
+const argsCount = 2
 
-	if format == "" {
-		format = "stylish"
-	}
+func getArgs(cmd *cli.Command) (string, string, string) {
+	filepath1 := cmd.StringArg("filepath1")
+	filepath2 := cmd.StringArg("filepath2")
+	format := cmd.String("format")
 
 	return filepath1, filepath2, format
 }
 
-func runDiff(ctx context.Context, cmd *cli.Command) error {
+func runDiff(_ context.Context, cmd *cli.Command) error {
 	filepath1, filepath2, format := getArgs(cmd)
 
 	result, err := code.GenDiff(filepath1, filepath2, format)
@@ -60,11 +58,13 @@ func validatePath(path string) error {
 		return fmt.Errorf("path is a directory: %s", path)
 	}
 
-	if !strings.HasSuffix(path, ".json") && !strings.HasSuffix(path, ".yml") && !strings.HasSuffix(path, ".yaml") {
-		return fmt.Errorf("unsupported format")
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".json", ".yaml", ".yml":
+		return nil
+	default:
+		return errors.New("unsupported format")
 	}
-
-	return nil
 }
 
 func New() *cli.Command {
@@ -86,7 +86,7 @@ func New() *cli.Command {
 		ArgValidator: func(_ context.Context, cmd *cli.Command) error {
 			args := cmd.Args().Slice()
 
-			if len(args) != 2 {
+			if len(args) != argsCount {
 				_ = cli.ShowRootCommandHelp(cmd)
 				return fmt.Errorf("%w, got %d", errInvalidArguments, cmd.Args().Len())
 			}
@@ -104,7 +104,7 @@ func New() *cli.Command {
 			&cli.StringFlag{
 				Name: "format", Aliases: []string{"f"},
 				Usage: "output format",
-				Value: "stylish",
+				Value: code.DefaultFormatter,
 			},
 		},
 		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {

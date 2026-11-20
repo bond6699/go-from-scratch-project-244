@@ -16,9 +16,11 @@ var (
 	errFailedNormalize         = errors.New("failed to normalize")
 )
 
+const DefaultFormatter = "stylish"
+
 func GenDiff(filepath1, filepath2, format string) (string, error) {
 	if format == "" {
-		format = "stylish"
+		format = DefaultFormatter
 	}
 
 	data1, err := parser.Parse(filepath1)
@@ -41,7 +43,7 @@ func GenDiff(filepath1, filepath2, format string) (string, error) {
 		return "", fmt.Errorf("%w %q: %w", errFailedNormalize, filepath2, err)
 	}
 
-	diff := analyzer.Analyze(data1, data2)
+	diff := analyzer.Analyze("root", data1, data2)
 
 	result, err := formatter.Format(format, diff)
 	if err != nil {
