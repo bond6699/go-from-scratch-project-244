@@ -74,26 +74,12 @@ gendiff [options] <filepath1> <filepath2>
 
 ```text
 {
-    additional: {
-        one: 1
-      - three: [
-            1, 2, 4
-            2
-            hello from, GO
-        ]
-      + three: [
-            1, 2
-            2
-            hello from, GO
-        ]
-        two: 2
-    }
-    follow: false
+  - follow: false
     host: hexlet.io
-    proxy: 123.234.53.22
-  - secret: null
-  + secret: null
-    timeout: 50
+  - proxy: 123.234.53.22
+  - timeout: 50
+  + timeout: 20
+  + verbose: true
 }
 ```
 
@@ -106,8 +92,10 @@ gendiff [options] <filepath1> <filepath2>
 Пример вывода:
 
 ```text
-Property 'additional.three' was updated. From [1, 2, 4 2 hello from, GO] to [1, 2 2 hello from, GO]
-Property 'secret' was updated. From null to 'null'
+Property 'follow' was removed
+Property 'proxy' was removed
+Property 'timeout' was updated. From 50 to 20
+Property 'verbose' was added with value: true
 ```
 
 **JSON**
@@ -121,40 +109,10 @@ Property 'secret' was updated. From null to 'null'
 ```json
 {
    "child": {
-      "additional": {
-         "child": {
-            "one": {
-               "old": 1,
-               "key": "one",
-               "status": "Unchanged"
-            },
-            "three": {
-               "old": [
-                  "1, 2, 4",
-                  2,
-                  "hello from, GO"
-               ],
-               "new": [
-                  "1, 2",
-                  2,
-                  "hello from, GO"
-               ],
-               "key": "three",
-               "status": "Changed"
-            },
-            "two": {
-               "old": 2,
-               "key": "two",
-               "status": "Unchanged"
-            }
-         },
-         "key": "additional",
-         "status": "Container"
-      },
       "follow": {
          "old": false,
          "key": "follow",
-         "status": "Unchanged"
+         "status": "Deleted"
       },
       "host": {
          "old": "hexlet.io",
@@ -164,18 +122,18 @@ Property 'secret' was updated. From null to 'null'
       "proxy": {
          "old": "123.234.53.22",
          "key": "proxy",
-         "status": "Unchanged"
-      },
-      "secret": {
-         "old": null,
-         "new": "null",
-         "key": "secret",
-         "status": "Changed"
+         "status": "Deleted"
       },
       "timeout": {
          "old": 50,
+         "new": 20,
          "key": "timeout",
-         "status": "Unchanged"
+         "status": "Changed"
+      },
+      "verbose": {
+         "new": true,
+         "key": "verbose",
+         "status": "Added"
       }
    },
    "key": "root",
@@ -250,6 +208,7 @@ make build
 │   ├── app/           # Настройка CLI
 │   ├── formatter/     # Форматирование результата
 │   └── parser/        # Чтение и нормализация файлов
+├── testdata/          # Примеры тестовых файлов (JSON, YAML)
 ├── gendiff.go         # Публичная функция GenDiff
 ├── Makefile           # Команды разработки
 ├── go.mod
@@ -258,4 +217,4 @@ make build
 
 ## Демонстрация
 
-[![asciicast](https://asciinema.org/a/B10iyrpBMxRNYLEX.svg)](https://asciinema.org/a/B10iyrpBMxRNYLEX)
+[![asciicast](https://asciinema.org/a/A1iFJBKfHNzKYgeI.svg)](https://asciinema.org/a/A1iFJBKfHNzKYgeI)
