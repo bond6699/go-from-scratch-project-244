@@ -19,8 +19,8 @@ func TestGenDiff(t *testing.T) {
 	}{
 		{
 			"detect equal JSON files in stylish format",
-			"internal/parser/testdata/json/simple.json",
-			"internal/parser/testdata/json/simple.json",
+			"testdata/simple.json",
+			"testdata/simple.json",
 			"stylish",
 			`{
     follow: false
@@ -33,8 +33,8 @@ func TestGenDiff(t *testing.T) {
 		},
 		{
 			"detect equal JSON files with default empty format",
-			"internal/parser/testdata/json/simple.json",
-			"internal/parser/testdata/json/simple.json",
+			"testdata/simple.json",
+			"testdata/simple.json",
 			"",
 			`{
     follow: false
@@ -47,16 +47,16 @@ func TestGenDiff(t *testing.T) {
 		},
 		{
 			"detect equal JSON files in plain format",
-			"internal/parser/testdata/json/simple.json",
-			"internal/parser/testdata/json/simple.json",
+			"testdata/simple.json",
+			"testdata/simple.json",
 			"plain",
 			``,
 			nil,
 		},
 		{
 			"detect equal JSON and YAML files",
-			"internal/parser/testdata/json/simple.json",
-			"internal/parser/testdata/yaml/simple.yaml",
+			"testdata/simple.json",
+			"testdata/simple.yaml",
 			"stylish",
 			`{
     follow: false
@@ -68,16 +68,53 @@ func TestGenDiff(t *testing.T) {
 			nil,
 		},
 		{
+			"detect differences in stylish format",
+			"testdata/complex3.json",
+			"testdata/complex4.json",
+			"stylish",
+			`{
+    additional: {
+        one: 1
+      - three: [
+            1, 2, 4
+            2
+            hello from, GO
+        ]
+      + three: [
+            1, 2
+            2
+            hello from, GO
+        ]
+        two: 2
+    }
+    follow: false
+    host: hexlet.io
+    proxy: 123.234.53.22
+  - secret: null
+  + secret: null
+    timeout: 50
+}`,
+			nil,
+		},
+		{
+			"detect differences in plain format",
+			"testdata/complex3.json",
+			"testdata/complex4.json",
+			"plain",
+			"Property 'additional.three' was updated. From [complex value] to [complex value]\nProperty 'secret' was updated. From null to 'null'",
+			nil,
+		},
+		{
 			"detect error with missing first file",
 			"testdata/missing.json",
-			"internal/parser/testdata/json/simple.json",
+			"testdata/simple.json",
 			"stylish",
 			``,
 			errFailedProcessFirstFile,
 		},
 		{
 			"detect error with missing second file",
-			"internal/parser/testdata/json/simple.json",
+			"testdata/simple.json",
 			"testdata/missing.json",
 			"stylish",
 			``,
@@ -85,8 +122,8 @@ func TestGenDiff(t *testing.T) {
 		},
 		{
 			"detect error with unsupported format",
-			"internal/parser/testdata/json/simple.json",
-			"internal/parser/testdata/json/simple.json",
+			"testdata/simple.json",
+			"testdata/simple.json",
 			"unsupported",
 			``,
 			errFailedFormat,
@@ -104,30 +141,53 @@ func TestGenDiff(t *testing.T) {
 }
 
 func TestGenDiff_JSONFormat_SemanticIntegration(t *testing.T) {
-	result, err := GenDiff("testdata/complex1.json", "testdata/complex2.json", "json")
-	require.NoError(t, err)
+	t.Run("complex diff semantic check", func(t *testing.T) {
+		result, err := GenDiff("testdata/complex1.json", "testdata/complex2.json", "json")
+		require.NoError(t, err)
 
-	var diff map[string]any
+		var diff map[string]any
 
-	err = json.Unmarshal([]byte(result), &diff)
-	require.NoError(t, err)
+		err = json.Unmarshal([]byte(result), &diff)
+		require.NoError(t, err)
 
-	require.Equal(t, "root", diff["key"])
-	require.Equal(t, "Container", diff["status"])
+		require.Equal(t, "root", diff["key"])
+		require.Equal(t, "Container", diff["status"])
 
-	children, ok := diff["child"].(map[string]any)
-	require.True(t, ok)
+		children, ok := diff["child"].(map[string]any)
+		require.True(t, ok)
 
-	common, ok := children["common"].(map[string]any)
-	require.True(t, ok)
-	require.Equal(t, "Container", common["status"])
+		common, ok := children["common"].(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, "Container", common["status"])
 
-	commonChildren, ok := common["child"].(map[string]any)
-	require.True(t, ok)
+		commonChildren, ok := common["child"].(map[string]any)
+		require.True(t, ok)
 
-	setting1, ok := commonChildren["setting1"].(map[string]any)
-	require.True(t, ok)
-	assert.Equal(t, "Deleted", setting1["status"])
-	assert.Equal(t, "Value 1", setting1["old"])
-	assert.Nil(t, setting1["new"])
+		setting1, ok := commonChildren["setting1"].(map[string]any)
+		require.True(t, ok)
+		assert.Equal(t, "Deleted", setting1["status"])
+		assert.Equal(t, "Value 1", setting1["old"])
+		assert.Nil(t, setting1["new"])
+	})
+
+	t.Run("null vs string null preservation across full pipeline", func(t *testing.T) {
+		result, err := GenDiff("testdata/complex3.json", "testdata/complex4.json", "json")
+		require.NoError(t, err)
+
+		var diff map[string]any
+
+		err = json.Unmarshal([]byte(result), &diff)
+		require.NoError(t, err)
+
+		children, ok := diff["child"].(map[string]any)
+		require.True(t, ok)
+
+		secret, ok := children["secret"].(map[string]any)
+		require.True(t, ok)
+		assert.Equal(t, "Changed", secret["status"])
+		assert.Nil(t, secret["old"])
+		_, hasOld := secret["old"]
+		assert.True(t, hasOld, "old key must be present with null value")
+		assert.Equal(t, "null", secret["new"])
+	})
 }

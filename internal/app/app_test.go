@@ -20,8 +20,8 @@ func TestApp(t *testing.T) {
 			"run with DEFAULT format",
 			[]string{
 				"gendiff",
-				"../parser/testdata/json/simple.json",
-				"../parser/testdata/json/simple.json",
+				"../../testdata/simple.json",
+				"../../testdata/simple.json",
 			},
 			`{
     follow: false
@@ -36,8 +36,8 @@ func TestApp(t *testing.T) {
 			"run with STYLISH format",
 			[]string{
 				"gendiff",
-				"../parser/testdata/json/simple.json",
-				"../parser/testdata/json/simple.json",
+				"../../testdata/simple.json",
+				"../../testdata/simple.json",
 			},
 			`{
     follow: false
@@ -54,8 +54,8 @@ func TestApp(t *testing.T) {
 				"gendiff",
 				"--format",
 				"plain",
-				"../parser/testdata/json/simple.json",
-				"../parser/testdata/json/simple.json",
+				"../../testdata/simple.json",
+				"../../testdata/simple.json",
 			},
 			``,
 			nil,
@@ -66,8 +66,8 @@ func TestApp(t *testing.T) {
 				"gendiff",
 				"--format",
 				"json",
-				"../parser/testdata/json/simple.json",
-				"../parser/testdata/json/simple.json",
+				"../../testdata/simple.json",
+				"../../testdata/simple.json",
 			},
 			`{
    "child": {
@@ -108,26 +108,28 @@ func TestApp(t *testing.T) {
 				"gendiff",
 				"--format",
 				"unsupported",
-				"../parser/testdata/json/simple.json",
-				"../parser/testdata/json/simple.json",
+				"../../testdata/simple.json",
+				"../../testdata/simple.json",
 			},
 			"",
 			errUnsupportedFormat,
 		},
 		{
-			"run with missing first file",
+			"run with missing second file",
 			[]string{
 				"gendiff",
-				"../parser/testdata/json/simple.json",
+				"../../testdata/simple.json",
 			},
 			"",
 			errInvalidArguments,
 		},
 		{
-			"run with missing second file",
+			"run with too many arguments",
 			[]string{
 				"gendiff",
-				"../parser/testdata/json/simple.json",
+				"../../testdata/simple.json",
+				"../../testdata/simple.json",
+				"../../testdata/simple.json",
 			},
 			"",
 			errInvalidArguments,
@@ -137,7 +139,7 @@ func TestApp(t *testing.T) {
 			[]string{
 				"gendiff",
 				"data/json/simple.json",
-				"../parser/testdata/json/simple.json",
+				"../../testdata/simple.json",
 			},
 			"",
 			errValidatePath,
@@ -146,7 +148,7 @@ func TestApp(t *testing.T) {
 			"run with invalid second file",
 			[]string{
 				"gendiff",
-				"../parser/testdata/json/simple.json",
+				"../../testdata/simple.json",
 				"data/json/simple.json",
 			},
 			"",
@@ -170,7 +172,9 @@ func TestApp(t *testing.T) {
 			cmd.Writer = &output
 
 			err := cmd.Run(context.Background(), td.args)
-			if err == nil {
+
+			if td.wantErr == nil {
+				require.NoError(t, err)
 				assert.Equal(t, td.want, output.String())
 			} else {
 				require.ErrorIs(t, err, td.wantErr)

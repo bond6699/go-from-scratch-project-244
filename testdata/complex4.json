@@ -1,0 +1,16 @@
+{
+    "host": "hexlet.io",
+    "timeout": 50,
+    "proxy": "123.234.53.22",
+    "follow": false,
+    "secret": "null",
+    "additional": {
+        "one": 1,
+        "two": 2,
+        "three": [
+            "1, 2",
+            2,
+            "hello from, GO"
+        ]
+    }
+}
