@@ -9,17 +9,17 @@ import (
 	"code/internal/analyzer"
 )
 
-type FormatterPlain struct{}
+type Plain struct{}
 
-func NewFormatterPlain() FormatterPlain {
-	return FormatterPlain{}
+func NewFormatterPlain() Plain {
+	return Plain{}
 }
 
-func (fp FormatterPlain) Format(node *analyzer.DiffNode) (string, error) {
+func (fp Plain) Format(node *analyzer.ContainerNode) (string, error) {
 	var builder strings.Builder
 
 	for _, key := range fp.getSortedChildKeys(node) {
-		if err := fp.formatNode(&builder, []string{}, node.Children[key]); err != nil {
+		if err := fp.formatNode(&builder, []string{}, node.Children()[key]); err != nil {
 			return "", err
 		}
 	}
@@ -27,27 +27,26 @@ func (fp FormatterPlain) Format(node *analyzer.DiffNode) (string, error) {
 	return strings.TrimSuffix(builder.String(), "\n"), nil
 }
 
-func (fp FormatterPlain) formatNode(builder *strings.Builder, path []string, node *analyzer.DiffNode) error {
-	path = append(path, node.Key)
-	hasChild := node.Children != nil
+func (fp Plain) formatNode(builder *strings.Builder, path []string, node analyzer.DiffNode) error {
+	path = append(path, node.Key())
 
-	switch node.Status {
-	case analyzer.Container:
-		return fp.formatContainer(builder, path, node)
-	case analyzer.Added:
-		return fp.formatAdded(builder, path, node, hasChild)
-	case analyzer.Deleted:
-		return fp.formatDeleted(builder, path, node)
-	case analyzer.Changed:
-		return fp.formatChanged(builder, path, node, hasChild)
+	switch v := node.(type) {
+	case *analyzer.ContainerNode:
+		return fp.formatContainer(builder, path, v)
+	case *analyzer.AddedNode:
+		return fp.formatAdded(builder, path, v)
+	case *analyzer.DeletedNode:
+		return fp.formatDeleted(builder, path)
+	case *analyzer.ChangedNode:
+		return fp.formatChanged(builder, path, v)
 	}
 
 	return nil
 }
 
-func (fp FormatterPlain) formatContainer(builder *strings.Builder, path []string, node *analyzer.DiffNode) error {
+func (fp Plain) formatContainer(builder *strings.Builder, path []string, node *analyzer.ContainerNode) error {
 	for _, key := range fp.getSortedChildKeys(node) {
-		if err := fp.formatNode(builder, path, node.Children[key]); err != nil {
+		if err := fp.formatNode(builder, path, node.Children()[key]); err != nil {
 			return err
 		}
 	}
@@ -55,63 +54,42 @@ func (fp FormatterPlain) formatContainer(builder *strings.Builder, path []string
 	return nil
 }
 
-func (fp FormatterPlain) formatAdded(
+func (fp Plain) formatAdded(
 	builder *strings.Builder,
 	path []string,
-	node *analyzer.DiffNode,
-	hasChild bool,
+	node *analyzer.AddedNode,
 ) error {
-	ok, value := node.GetNewValue()
-	if !ok {
-		return fmt.Errorf("%w: key %q", errGetNodeValue, node.Key)
-	}
-
 	fmt.Fprintf(
 		builder, "Property '%s' was added with value: %v\n",
 		strings.Join(path, "."),
-		fp.formatValue(value, hasChild),
+		fp.formatValue(node.Value()),
 	)
 
 	return nil
 }
 
-func (fp FormatterPlain) formatDeleted(builder *strings.Builder, path []string, node *analyzer.DiffNode) error {
-	if ok, _ := node.GetOldValue(); !ok {
-		return fmt.Errorf("%w: key %q", errGetNodeValue, node.Key)
-	}
-
+func (fp Plain) formatDeleted(builder *strings.Builder, path []string) error {
 	fmt.Fprintf(builder, "Property '%s' was removed\n", strings.Join(path, "."))
 
 	return nil
 }
 
-func (fp FormatterPlain) formatChanged(
+func (fp Plain) formatChanged(
 	builder *strings.Builder,
 	path []string,
-	node *analyzer.DiffNode,
-	hasChild bool,
+	node *analyzer.ChangedNode,
 ) error {
-	okOld, oldValue := node.GetOldValue()
-	if !okOld {
-		return fmt.Errorf("%w: key %q", errGetNodeValue, node.Key)
-	}
-
-	okNew, newValue := node.GetNewValue()
-	if !okNew {
-		return fmt.Errorf("%w: key %q", errGetNodeValue, node.Key)
-	}
-
 	fmt.Fprintf(
 		builder, "Property '%s' was updated. From %v to %v\n",
 		strings.Join(path, "."),
-		fp.formatValue(oldValue, hasChild),
-		fp.formatValue(newValue, hasChild),
+		fp.formatValue(node.OldValue()),
+		fp.formatValue(node.NewValue()),
 	)
 
 	return nil
 }
 
-func (fp FormatterPlain) formatValue(value any, hasChild bool) any {
+func (fp Plain) formatValue(value any) any {
 	if value == nil {
 		return "null"
 	}
@@ -119,7 +97,7 @@ func (fp FormatterPlain) formatValue(value any, hasChild bool) any {
 	_, isMap := value.(map[string]any)
 	_, isArray := value.([]any)
 
-	if hasChild || isMap || isArray {
+	if isMap || isArray {
 		return "[complex value]"
 	}
 
@@ -133,8 +111,8 @@ func (fp FormatterPlain) formatValue(value any, hasChild bool) any {
 	return value
 }
 
-func (fp FormatterPlain) getSortedChildKeys(node *analyzer.DiffNode) []string {
-	keys := slices.Collect(maps.Keys(node.Children))
+func (fp Plain) getSortedChildKeys(node *analyzer.ContainerNode) []string {
+	keys := slices.Collect(maps.Keys(node.Children()))
 	slices.Sort(keys)
 
 	return keys

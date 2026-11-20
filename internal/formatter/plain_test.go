@@ -12,7 +12,7 @@ import (
 func TestPlainFormat(t *testing.T) {
 	tests := []struct {
 		name string
-		diff analyzer.DiffNode
+		diff *analyzer.ContainerNode
 		want string
 	}{
 		{
@@ -67,7 +67,7 @@ Property 'group2' was added with value: [complex value]`,
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			got, err := FormatterPlain{}.Format(&td.diff)
+			got, err := Plain{}.Format(td.diff)
 			assert.Equal(t, td.want, got)
 			require.NoError(t, err)
 		})

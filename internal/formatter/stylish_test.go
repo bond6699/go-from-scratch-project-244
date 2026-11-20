@@ -12,7 +12,7 @@ import (
 func TestStylishFormat(t *testing.T) {
 	tests := []struct {
 		name  string
-		input analyzer.DiffNode
+		input *analyzer.ContainerNode
 		want  string
 	}{
 		{
@@ -120,7 +120,7 @@ func TestStylishFormat(t *testing.T) {
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			got, err := FormatterStylish{}.Format(&td.input)
+			got, err := Stylish{}.Format(td.input)
 			assert.Equal(t, td.want, got)
 			require.NoError(t, err)
 		})

@@ -10,13 +10,13 @@ import (
 
 var errFormatToJSON = errors.New("failed to format to JSON")
 
-type FormatterJSON struct{}
+type JSON struct{}
 
-func NewFormatterJSON() FormatterJSON {
-	return FormatterJSON{}
+func NewFormatterJSON() JSON {
+	return JSON{}
 }
 
-func (FormatterJSON) Format(node *analyzer.DiffNode) (string, error) {
+func (JSON) Format(node *analyzer.ContainerNode) (string, error) {
 	resultBytes, err := json.MarshalIndent(node, "", "   ")
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", errFormatToJSON, err)

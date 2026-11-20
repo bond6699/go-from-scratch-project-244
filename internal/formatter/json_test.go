@@ -2,6 +2,7 @@ package formatter
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,9 +12,14 @@ import (
 )
 
 func TestJSONFormat(t *testing.T) {
+	complexExpectedBytes, err := os.ReadFile("../../testdata/complex_expected.json")
+	require.NoError(t, err)
+
+	complexExpected := string(complexExpectedBytes)
+
 	tests := []struct {
 		name    string
-		diff    analyzer.DiffNode
+		diff    *analyzer.ContainerNode
 		want    string
 		wantErr error
 	}{
@@ -130,98 +136,7 @@ func TestJSONFormat(t *testing.T) {
 		{
 			"detect correct JSON result with complex values",
 			complexDiff,
-			`{
-   "child": {
-      "common": {
-         "child": {
-            "setting1": {
-               "old": "Value 1",
-               "key": "setting1",
-               "status": "Deleted"
-            },
-            "setting2": {
-               "old": 200,
-               "key": "setting2",
-               "status": "Unchanged"
-            },
-            "setting3": {
-               "old": true,
-               "key": "setting3",
-               "status": "Unchanged"
-            },
-            "setting6": {
-               "child": {
-                  "doge": {
-                     "child": {
-                        "wow": {
-                           "old": "",
-                           "key": "wow",
-                           "status": "Unchanged"
-                        }
-                     },
-                     "key": "doge",
-                     "status": "Container"
-                  },
-                  "key": {
-                     "old": "value",
-                     "key": "key",
-                     "status": "Unchanged"
-                  }
-               },
-               "key": "setting6",
-               "status": "Container"
-            }
-         },
-         "key": "common",
-         "status": "Container"
-      },
-      "group1": {
-         "child": {
-            "baz": {
-               "old": "bas",
-               "key": "baz",
-               "status": "Unchanged"
-            },
-            "foo": {
-               "old": "bar",
-               "key": "foo",
-               "status": "Unchanged"
-            },
-            "nest": {
-               "new": {
-                  "key": "value"
-               },
-               "key": "nest",
-               "status": "Added"
-            },
-            "secret": {
-               "new": "null",
-               "key": "secret",
-               "status": "Added"
-            },
-            "secret2": {
-               "new": null,
-               "key": "secret2",
-               "status": "Added"
-            }
-         },
-         "key": "group1",
-         "status": "Container"
-      },
-      "group2": {
-         "new": {
-            "abc": 12345,
-            "deep": {
-               "id": 45
-            }
-         },
-         "key": "group2",
-         "status": "Added"
-      }
-   },
-   "key": "root",
-   "status": "Container"
-}`,
+			complexExpected,
 			nil,
 		},
 		{
@@ -252,8 +167,8 @@ func TestJSONFormat(t *testing.T) {
 		},
 		{
 			"detect errFormatToJSON with incorrect value",
-			*ContainerNode("root", map[string]*analyzer.DiffNode{
-				"follow": UnchangedNode("follow", any(func() {})),
+			analyzer.NewContainerNode("root", map[string]analyzer.DiffNode{
+				"follow": analyzer.NewUnchangedNode("follow", any(func() {})),
 			}),
 			"",
 			errFormatToJSON,
@@ -262,7 +177,8 @@ func TestJSONFormat(t *testing.T) {
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			got, err := FormatterJSON{}.Format(&td.diff)
+			var got string
+			got, err = JSON{}.Format(td.diff)
 			assert.Equal(t, td.want, got)
 			require.ErrorIs(t, err, td.wantErr)
 		})
@@ -271,7 +187,7 @@ func TestJSONFormat(t *testing.T) {
 
 func TestJSONFormat_SemanticStructure(t *testing.T) {
 	t.Run("semantic check of null vs string null and omitted keys", func(t *testing.T) {
-		got, err := FormatterJSON{}.Format(&diffWithNil)
+		got, err := JSON{}.Format(diffWithNil)
 		require.NoError(t, err)
 
 		var parsed map[string]any
@@ -300,7 +216,7 @@ func TestJSONFormat_SemanticStructure(t *testing.T) {
 	})
 
 	t.Run("semantic check of complex diff and deleted/added keys omission", func(t *testing.T) {
-		got, err := FormatterJSON{}.Format(&complexDiff)
+		got, err := JSON{}.Format(complexDiff)
 		require.NoError(t, err)
 
 		var parsed map[string]any

@@ -1,0 +1,92 @@
+{
+   "child": {
+      "common": {
+         "child": {
+            "setting1": {
+               "old": "Value 1",
+               "key": "setting1",
+               "status": "Deleted"
+            },
+            "setting2": {
+               "old": 200,
+               "key": "setting2",
+               "status": "Unchanged"
+            },
+            "setting3": {
+               "old": true,
+               "key": "setting3",
+               "status": "Unchanged"
+            },
+            "setting6": {
+               "child": {
+                  "doge": {
+                     "child": {
+                        "wow": {
+                           "old": "",
+                           "key": "wow",
+                           "status": "Unchanged"
+                        }
+                     },
+                     "key": "doge",
+                     "status": "Container"
+                  },
+                  "key": {
+                     "old": "value",
+                     "key": "key",
+                     "status": "Unchanged"
+                  }
+               },
+               "key": "setting6",
+               "status": "Container"
+            }
+         },
+         "key": "common",
+         "status": "Container"
+      },
+      "group1": {
+         "child": {
+            "baz": {
+               "old": "bas",
+               "key": "baz",
+               "status": "Unchanged"
+            },
+            "foo": {
+               "old": "bar",
+               "key": "foo",
+               "status": "Unchanged"
+            },
+            "nest": {
+               "new": {
+                  "key": "value"
+               },
+               "key": "nest",
+               "status": "Added"
+            },
+            "secret": {
+               "new": "null",
+               "key": "secret",
+               "status": "Added"
+            },
+            "secret2": {
+               "new": null,
+               "key": "secret2",
+               "status": "Added"
+            }
+         },
+         "key": "group1",
+         "status": "Container"
+      },
+      "group2": {
+         "new": {
+            "abc": 12345,
+            "deep": {
+               "id": 45
+            }
+         },
+         "key": "group2",
+         "status": "Added"
+      }
+   },
+   "key": "root",
+   "status": "Container"
+}

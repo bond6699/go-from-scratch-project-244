@@ -36,12 +36,12 @@ func TestAnalyze(t *testing.T) {
 				"follow":  true,
 				"secret":  "null",
 			},
-			*ContainerNode("root", map[string]*DiffNode{
-				"host":    UnchangedNode("host", "hexlet.io"),
-				"timeout": ChangedNode("timeout", int64(50), int64(100)),
-				"proxy":   ChangedNode("proxy", "123.234.53.22", "123.235.53.22"),
-				"follow":  ChangedNode("follow", false, true),
-				"secret":  UnchangedNode("secret", "null"),
+			NewContainerNode("root", map[string]DiffNode{
+				"host":    NewUnchangedNode("host", "hexlet.io"),
+				"timeout": NewChangedNode("timeout", int64(50), int64(100)),
+				"proxy":   NewChangedNode("proxy", "123.234.53.22", "123.235.53.22"),
+				"follow":  NewChangedNode("follow", false, true),
+				"secret":  NewUnchangedNode("secret", "null"),
 			}),
 		},
 		{
@@ -56,37 +56,37 @@ func TestAnalyze(t *testing.T) {
 				"timeout": int64(50),
 				"proxy":   "123.234.53.22",
 			},
-			*ContainerNode("root", map[string]*DiffNode{
-				"host":    UnchangedNode("host", "hexlet.io"),
-				"timeout": UnchangedNode("timeout", int64(50)),
-				"proxy":   UnchangedNode("proxy", "123.234.53.22"),
+			NewContainerNode("root", map[string]DiffNode{
+				"host":    NewUnchangedNode("host", "hexlet.io"),
+				"timeout": NewUnchangedNode("timeout", int64(50)),
+				"proxy":   NewUnchangedNode("proxy", "123.234.53.22"),
 			}),
 		},
 		{
 			"detect additions and removals in complex maps",
 			complex1,
 			complex2,
-			*ContainerNode("root", map[string]*DiffNode{
-				"common": ContainerNode("common", map[string]*DiffNode{
-					"setting1": DeletedNode("setting1", "Value 1"),
-					"setting2": UnchangedNode("setting2", int64(200)),
-					"setting3": UnchangedNode("setting3", true),
-					"setting6": ContainerNode("setting6", map[string]*DiffNode{
-						"key": UnchangedNode("key", "value"),
-						"doge": ContainerNode("doge", map[string]*DiffNode{
-							"wow": UnchangedNode("wow", ""),
+			NewContainerNode("root", map[string]DiffNode{
+				"common": NewContainerNode("common", map[string]DiffNode{
+					"setting1": NewDeletedNode("setting1", "Value 1"),
+					"setting2": NewUnchangedNode("setting2", int64(200)),
+					"setting3": NewUnchangedNode("setting3", true),
+					"setting6": NewContainerNode("setting6", map[string]DiffNode{
+						"key": NewUnchangedNode("key", "value"),
+						"doge": NewContainerNode("doge", map[string]DiffNode{
+							"wow": NewUnchangedNode("wow", ""),
 						}),
 					}),
 				}),
-				"group1": ContainerNode("group1", map[string]*DiffNode{
-					"baz": UnchangedNode("baz", "bas"),
-					"foo": UnchangedNode("foo", "bar"),
-					"nest": AddedNode("nest", map[string]any{
+				"group1": NewContainerNode("group1", map[string]DiffNode{
+					"baz": NewUnchangedNode("baz", "bas"),
+					"foo": NewUnchangedNode("foo", "bar"),
+					"nest": NewAddedNode("nest", map[string]any{
 						"key": "value",
 					}),
-					"secret": AddedNode("secret", "null"),
+					"secret": NewAddedNode("secret", "null"),
 				}),
-				"group2": AddedNode("group2", map[string]any{
+				"group2": NewAddedNode("group2", map[string]any{
 					"abc": int64(12345),
 					"deep": map[string]any{
 						"id": int64(45),
@@ -106,14 +106,14 @@ func TestAnalyze(t *testing.T) {
 				"others":    []any{"hello", "world"},
 				"languages": []any{"GO", "RUST", "PYTHON"},
 			},
-			*ContainerNode("root", map[string]*DiffNode{
-				"languages": UnchangedNode("languages", []any{"GO", "RUST", "PYTHON"}),
-				"numbers": ChangedNode(
+			NewContainerNode("root", map[string]DiffNode{
+				"languages": NewUnchangedNode("languages", []any{"GO", "RUST", "PYTHON"}),
+				"numbers": NewChangedNode(
 					"numbers",
 					[]any{int64(1), int64(6), int64(9)},
 					[]any{int64(1), int64(6), int64(9), 22.6},
 				),
-				"others": ChangedNode(
+				"others": NewChangedNode(
 					"others",
 					[]any{"hello", "world", "null"},
 					[]any{"hello", "world"},
@@ -124,14 +124,14 @@ func TestAnalyze(t *testing.T) {
 			"detect equal empty maps",
 			map[string]any{},
 			map[string]any{},
-			*ContainerNode("root", map[string]*DiffNode{}),
+			NewContainerNode("root", map[string]DiffNode{}),
 		},
 		{
 			"detect difference between empty map and map with added all keys",
 			map[string]any{},
 			complex1,
-			*ContainerNode("root", map[string]*DiffNode{
-				"common": AddedNode("common", map[string]any{
+			NewContainerNode("root", map[string]DiffNode{
+				"common": NewAddedNode("common", map[string]any{
 					"setting1": "Value 1",
 					"setting2": int64(200),
 					"setting3": true,
@@ -142,7 +142,7 @@ func TestAnalyze(t *testing.T) {
 						},
 					},
 				}),
-				"group1": AddedNode("group1", map[string]any{
+				"group1": NewAddedNode("group1", map[string]any{
 					"baz": "bas",
 					"foo": "bar",
 				}),
@@ -152,8 +152,8 @@ func TestAnalyze(t *testing.T) {
 			"detect difference between map with deleted all keys and empty map",
 			complex1,
 			map[string]any{},
-			*ContainerNode("root", map[string]*DiffNode{
-				"common": DeletedNode("common", map[string]any{
+			NewContainerNode("root", map[string]DiffNode{
+				"common": NewDeletedNode("common", map[string]any{
 					"setting1": "Value 1",
 					"setting2": int64(200),
 					"setting3": true,
@@ -164,7 +164,7 @@ func TestAnalyze(t *testing.T) {
 						},
 					},
 				}),
-				"group1": DeletedNode("group1", map[string]any{
+				"group1": NewDeletedNode("group1", map[string]any{
 					"baz": "bas",
 					"foo": "bar",
 				}),
@@ -181,8 +181,8 @@ func TestAnalyze(t *testing.T) {
 			map[string]any{
 				"object": "hello, world",
 			},
-			*ContainerNode("root", map[string]*DiffNode{
-				"object": ChangedNode(
+			NewContainerNode("root", map[string]DiffNode{
+				"object": NewChangedNode(
 					"object",
 					map[string]any{
 						"item1": int64(1),
@@ -203,8 +203,8 @@ func TestAnalyze(t *testing.T) {
 					"item2": int64(2),
 				},
 			},
-			*ContainerNode("root", map[string]*DiffNode{
-				"object": ChangedNode(
+			NewContainerNode("root", map[string]DiffNode{
+				"object": NewChangedNode(
 					"object",
 					"hello, world",
 					map[string]any{
@@ -222,15 +222,15 @@ func TestAnalyze(t *testing.T) {
 			map[string]any{
 				"id": int64(9007199254740994), // 2^53 + 2
 			},
-			*ContainerNode("root", map[string]*DiffNode{
-				"id": ChangedNode("id", int64(9007199254740993), int64(9007199254740994)),
+			NewContainerNode("root", map[string]DiffNode{
+				"id": NewChangedNode("id", int64(9007199254740993), int64(9007199254740994)),
 			}),
 		},
 	}
 
 	for _, td := range tests {
 		t.Run(td.name, func(t *testing.T) {
-			got := *Analyze(td.map1, td.map2)
+			got := Analyze("root", td.map1, td.map2)
 			assert.Equal(t, td.want, got)
 			wantJSON, _ := json.MarshalIndent(td.want, "", "  ")
 			gotJSON, _ := json.MarshalIndent(got, "", "  ")
@@ -238,42 +238,6 @@ func TestAnalyze(t *testing.T) {
 			assert.JSONEq(t, string(wantJSON), string(gotJSON))
 		})
 	}
-}
-
-func ContainerNode(key string, value map[string]*DiffNode) *DiffNode {
-	node := NewDiffNode(key, Container)
-	node.Children = value
-
-	return node
-}
-
-func UnchangedNode(key string, value any) *DiffNode {
-	node := NewDiffNode(key, Unchanged)
-	node.SetOldValue(value)
-
-	return node
-}
-
-func ChangedNode(key string, oldValue, newValue any) *DiffNode {
-	node := NewDiffNode(key, Changed)
-	node.SetOldValue(oldValue)
-	node.SetNewValue(newValue)
-
-	return node
-}
-
-func DeletedNode(key string, value any) *DiffNode {
-	node := NewDiffNode(key, Deleted)
-	node.SetOldValue(value)
-
-	return node
-}
-
-func AddedNode(key string, value any) *DiffNode {
-	node := NewDiffNode(key, Added)
-	node.SetNewValue(value)
-
-	return node
 }
 
 func loadFixture(t *testing.T, filepath string) map[string]any {
