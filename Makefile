@@ -1,6 +1,6 @@
 COVERAGE_MIN ?= 80
 
-.PHONY: run build lint lint-fix test test-coverage test-with-cover pre-commit
+.PHONY: run build lint lint-fix test test-coverage test-with-cover audit pre-commit
 
 run:
 	go run cmd/gendiff/main.go $(ARGS)
@@ -25,6 +25,9 @@ test-coverage:
 	}'
 test-with-cover:
 	go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out
+
+audit:
+	govulncheck ./...
 
 pre-commit:
 	make lint-fix
